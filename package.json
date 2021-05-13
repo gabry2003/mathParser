@@ -1,0 +1,32 @@
+{
+    "name": "mathsolver",
+    "version": "1.0.0",
+    "description": "Libreria che permette di eseguire diverse operazioni matematiche, come la risoluzione di equazioni e l'intersezione con gli assi",
+    "main": "index.js",
+    "scripts": {
+        "build": "webpack",
+        "generate-docs": "./node_modules/.bin/jsdoc ./* -c ./jsdoc.json -d ./docs/ -R README.md --verbose --recurse"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gabry2003/mathSolver.git"
+    },
+    "keywords": [
+        "math",
+        "solver",
+        "equation",
+        "library"
+    ],
+    "author": "Gabriele Princiotta",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/gabry2003/mathSolver/issues"
+    },
+    "homepage": "https://github.com/gabry2003/mathSolver#readme",
+    "devDependencies": {
+        "jsdoc": "^3.6.6",
+        "minami": "^1.2.3",
+        "webpack": "^5.37.0",
+        "webpack-cli": "^4.7.0"
+    }
+}
