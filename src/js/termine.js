@@ -39,17 +39,14 @@ function Termine(options) {
     this.parteLetterale = {};
 
     switch (typeof(options)) { // In base al tipo di dato delle opzioni che sono state passate
-        case 'TermineOptions': // Se ha passato un oggetto di tipo TermineOptions
-            // Prendo le opzioni
-            this.coefficiente = options.coefficiente;
-            this.parteLetterale = options.parteLetterale;
-            break;
         case 'string': // Se ha passato una stringa
             // Intrepreto la stringa e mi prendo i dati necessari
             Termine.interpreta(options, this);
             break;
-        default:
-            throw 'Per favore passa un oggetto di tipo TermineOptions oppure una stringa!';
+        default:    // Se ha passato un oggetto di tipo TermineOptions
+            // Prendo le opzioni
+            this.coefficiente = options.coefficiente;
+            this.parteLetterale = options.parteLetterale;
     }
 
     /**
@@ -67,7 +64,7 @@ function Termine(options) {
         } else if (this.coefficiente == -1) {
             string = `-${this.parteLetterale.toString()}`;
         } else {
-            string = numeroRazionale(this.coefficiente) + this.parteLetterale.toString()
+            string = MathSolver.numeroRazionale(this.coefficiente) + this.parteLetterale.toString()
         }
 
         return string;
@@ -85,6 +82,9 @@ function Termine(options) {
  * @returns {Termine} Termine interpretato
  */
 Termine.interpreta = function(termine, obj) {
+    console.log('termine', termine);
+    console.log('obj', obj);
+
     let coefficiente = '';
     let parteLetterale = '';
     let prendiCoefficiente = true;

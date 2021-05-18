@@ -13,7 +13,8 @@
  * 
  * @typedef {Object} ColoriGraficoOptions
  * @property {string} assi='#444444' - Colore che devono avere gli assi
- * @property {string} punti='#4D4DFF' - Colore che devono avere i punti
+ * @property {string} punti='#DD4B44' - Colore che devono avere i punti
+ * @property {string} puntiFunzione='4D4DFF' - Colore che devono avere i punti trovati della funzione
  * @property {string} funzione='#484848' - Colore che deve avere la funzione
  * @property {string} testo='#444444'
  * @author Gabriele Princiotta <gabriprinciott@gmail.com>
@@ -53,6 +54,8 @@
  * @version 1.0
  */
 function Grafico(options) {
+    if(options == null || options == undefined) options = {};
+
     // Carico i valori di default
     options.font = options.font || 'Poppins';
     if (options.focus == undefined || options.focus == null) options.focus = 3;
@@ -60,15 +63,42 @@ function Grafico(options) {
     if (options.colori == undefined || options.colori == null) {
         options.colori = {
             assi: '#444444',
-            punti: '#4D4DFF',
+            punti: '#DD4B44',
+            puntiFunzione: '#4D4DFF',
             funzione: '#484848',
             testo: '#444444'
         };
     } else {
         if (!options.colori) options.colori = '#444444';
-        if (!options.punti) options.punti = '#4D4DFF';
+        if (!options.punti) options.punti = '#DD4B44';
+        if (!options.puntiFunzione) options.puntiFunzione = '#4D4DFF';
         if (!options.funzione) options.funzione = '#484848';
         if (!options.testo) options.testo = '#444444';
+    }
+
+    if (options.assi == undefined || options.assi == null) {
+        options.assi = [
+            {
+                min: -20,
+                max: 20
+            },
+            {
+                min: -20,
+                max: 20
+            }
+        ];
+    } else {
+        for(let i = 0;i < options.assi.length;i++) {
+            if(options.assi[i] == undefined || options.assi[i] == null) {
+                options.assi[i] = {
+                    min: -20,
+                    max: 20
+                };
+            }else {
+                if(options.assi[i].min == undefined || options.assi[i].min == null) options.assi[i].min = -20;
+                if(options.assi[i].max == undefined || options.assi[i].max == null) options.assi[i].max = 20;
+            }
+        }
     }
 
     if (options.animazione == undefined || options.animazione == null) {
@@ -77,7 +107,7 @@ function Grafico(options) {
             loop: false
         };
     } else {
-        if (options.animazione == null || options.loop == undefined) options.animazione = false;
+        if (options.animazione == null || options.animazione == undefined) options.animazione = false;
         if (options.loop == null || options.loop == undefined) options.loop = false;
     }
 
@@ -88,7 +118,7 @@ function Grafico(options) {
      * @type {number}
      * @default -20
      */
-    this.xMin = options.assi ? (options.assi[0].min || -20) : -20;
+    this.xMin = options.assi[0].min;
     /**
      * Valore massimo dell'asse x
      * 
@@ -96,7 +126,7 @@ function Grafico(options) {
      * @type {number}
      * @default 20
      */
-    this.xMax = options.assi ? (options.assi[0].max || 20) : 20;
+    this.xMax = options.assi[0].max;
     /**
      * Valore minimo dell'asse y
      * 
@@ -104,7 +134,7 @@ function Grafico(options) {
      * @type {number}
      * @default -20
      */
-    this.yMin = options.assi ? (options.assi[1].min || -20) : -20;
+    this.yMin = options.assi[1].min;
     /**
      * Valore massimo dell'asse y
      * 
@@ -112,7 +142,7 @@ function Grafico(options) {
      * @type {number}
      * @default 20
      */
-    this.yMax = options.assi ? (options.assi[1].max || 20) : 20;
+    this.yMax = options.assi[1].max;
 
     /**
      * Indice della lettera attualmente visualizzata, serve a prendere il nome dei punti
@@ -146,7 +176,7 @@ function Grafico(options) {
      * @type {Array.<string>}
      * @default []
      */
-    this.funzioni = JSON.parse(_GET.get('funzioni'));
+    this.funzioni = JSON.parse(this._GET.get('funzioni'));
 
     // Trasformo le funzioni in espressioni
     /**
@@ -156,7 +186,7 @@ function Grafico(options) {
      * @type {Array.<string>}
      * @default []
      */
-    this.espressioni = funzioni.map(funzione => funzione.trim().replace('y=', '').replace('x=', ''));
+    this.espressioni = this.funzioni.map(funzione => funzione.trim().replace('y=', '').replace('x=', ''));
 
     /**
      * punti da disegnare nel grafico
@@ -165,22 +195,22 @@ function Grafico(options) {
      * @type {Array.<Punto>}
      * @default []
      */
-    this.punti = _GET.get('punti');
+    this.punti = this._GET.get('punti');
 
-    if (punti) { // Se ci sono punti
-        punti = JSON.parse(punti); // Parso l'array
+    if (this.punti) { // Se ci sono punti
+        this.punti = JSON.parse(this.punti); // Parso l'array
     }
 
-    // console.log('espressioni', espressioni);
-    // console.log('funzioni', funzioni);
-    // console.log('punti', punti);
+    let puntiGrafico = [];
+    let funzioniGrafico = null;
+    let assiGrafico = [];
 
     // Carico il grafico
     let mathbox = mathBox({
-        plugins: ['core', 'controls', 'cursor', 'mathbox'],
+        plugins: ['core', 'controls', 'cursor', 'mathbox', 'fullscreen'],
         controls: { klass: THREE.OrbitControls }
     });
-    if (mathbox.fallback) throw 'WebGL not supported'
+    if (mathbox.fallback) throw 'WebGL not supported';
 
     let three = mathbox.three;
     three.renderer.setClearColor(new THREE.Color(0xFFFFFF), 1.0);
@@ -194,54 +224,29 @@ function Grafico(options) {
     let view = mathbox.cartesian({
         //range: [[-2, 2], [-1, 1]],
         range: [
-            [xMin, xMax],
-            [yMin, yMax]
+            [this.xMin, this.xMax],
+            [this.yMin, this.yMax]
         ],
         scale: [3, 1.5],
     });
 
-    // Carico gli assi
-    let asseX = view.axis({ axis: 1, width: 3, detail: 40, color: options.colori.assi });
-    let asseY = view.axis({ axis: 2, width: 3, detail: 40, color: options.colori.assi });
-
     // Carico la griglia
     let griglia = view.grid({ width: 1, divideX: 40, divideY: 20, opacity: 0.25 });
-    mathbox.set('focus', options.camera);
-
-    // Carico tutte le funzioni
-    this.espressioni.forEach(espressione => {
-        const expression = math.parse(espressione); // Interpreto l'espressione
-
-        // La carico nel grafico
-        view.interval({
-            expr: function(emit, x, i, t) {
-                emit(x, expression.evaluate({ x: x }));
-            },
-            // Numero di x per cui trovare la y
-            width: 64,
-            // 2 = 2D, 3 = 3D
-            channels: 2,
-        });
-    });
+    mathbox.set('focus', options.focus);
 
     let curve =
         view.line({
-            width: 5,
+            width: 4,
             color: options.colori.funzione,
         });
 
     let points =
         view.point({
-            size: 6,
-            color: options.colori.punti,
+            size: 5,
+            color: options.colori.puntiFunzione,
         });
 
-    let scale =
-        view.scale({
-            divide: 10,
-        });
-
-    let ticks =
+    /*let ticks =
         view.ticks({
             width: 5,
             size: 15,
@@ -258,22 +263,89 @@ function Grafico(options) {
         view.label({
             color: options.colori.testo,
             zIndex: 1,
-        });
+        });*/
 
-    // Carico i label degli assi
+    // Carico gli assi
+    let assii = [];
+
+    options.assi.forEach((asse, i) => {
+        assii.push(view.axis({
+            axis: (i + 1),
+            width: 3,
+            detail: 40,
+            color: options.colori.assi
+        }));
+    });
+
+    // Carico tutte le funzioni
+    console.log('espressioni', this.espressioni);
+    let exps = this.espressioni;
+
+    funzioniGrafico = view.interval({
+        expr: function (emit, x, i, t) {
+            exps.forEach(espressione => {
+                const y = math.parse(espressione).evaluate({
+                    x: x
+                });
+
+                emit(x, y);
+            });
+        },
+        // Numero di x per cui trovare la y
+        width: 64,
+        // 2 = 2D, 3 = 3D
+        channels: 2,
+        items: exps.length
+    });
+    
     options.assi.forEach((asse, i) => {
         const nomi = ['x', 'y'];
         const offset = [
-            [16, 0],
-            [16, 0]
+            [25, 0],
+            [0, 25]
+        ];
+        const offsetTicks = [
+            [0, 40],
+            [40, 0]
         ];
         const coordinate = [
-            [xMax, 0],
-            [0, yMax]
+            [this.xMax, 0],
+            [0, this.yMax]
         ];
-
-        view.label({
-            text: view.text({ width: 1, data: nomi[i], font: options.font, weight: 'bold', style: 'normal' }),
+        
+        const scala = view.scale({
+            axis: (i + 1),
+            divide: asse.max / 2,
+            nice: true,
+            zero: i == 0
+        });
+        const ticks = view.ticks({
+            width: 5,
+            size: 15,
+            color: options.colori.testo,
+            zBias: 2
+        });
+        const ticksLabel = view.label({
+            color: options.colori.testo,
+            zIndex: 1,
+            offset: offsetTicks[i],
+            points: scala,
+            text: view.format({
+                digits: 2,
+                font: options.font,
+                weight: 'bold',
+                style: 'normal',
+                source: scala,
+            })
+        });
+        const label = view.label({
+            text: view.text({
+                width: 1,
+                data: [nomi[i]],
+                font: options.font,
+                weight: 'bold',
+                style: 'normal'
+            }),
             points: view.array({
                 width: 1,
                 channels: 2,
@@ -283,21 +355,33 @@ function Grafico(options) {
             }),
             size: 16,
             color: options.colori.testo,
-            outline: 1,
-            background: options.colori.testo,
+            outline: 0,
+            background: 'transparent',
             offset: offset[i],
             zIndex: 1
-        })
+        });
+
+        assiGrafico.push({
+            asse: assii[i],
+            scala: scala,
+            ticks: ticks,
+            ticksLabel: ticksLabel,
+            label: label
+        });
     });
 
-    if (punti) { // Se ci sono punti
-        // Li aggiungo nel grafico
-        punti.forEach(punto => {
-            // Prendo la lettera successiva per dare il nome al punto
-            const nomePunto = letteraAttuale ? String.fromCharCode(letteraAttuale.charCodeAt(letteraAttuale.length - 1) + 1) : 'A';
-            letteraAttuale = nomePunto;
+    console.log('assiGrafico', assiGrafico);
 
-            view.label({
+    if (this.punti) { // Se ci sono punti
+        // Li aggiungo nel grafico
+        this.punti.forEach(punto => {
+            // Prendo la lettera successiva per dare il nome al punto
+            const nomePunto = this.letteraAttuale ? String.fromCharCode(this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1) : 'A';
+            this.letteraAttuale = nomePunto;
+
+            console.log(`${nomePunto}(${punto.x}; ${punto.y})`);
+
+            puntiGrafico.push(view.label({
                 text: view.text({ width: 1, data: [nomePunto], font: options.font, weight: 'bold', style: 'normal' }),
                 points: view.array({
                     width: 1,
@@ -306,15 +390,15 @@ function Grafico(options) {
                         [punto.x, punto.y]
                     ]
                 }),
-                size: 18,
+                size: 22,
                 color: options.colori.punti,
                 outline: 1,
-                background: options.colori.punti,
-                offset: [0, 0],
+                background: 'transparent',
+                offset: [10, 10],
                 zIndex: 1
-            });
+            }));
 
-            indexLetteraAttuale++;
+            this.indexLetteraAttuale++;
         });
     }
 
@@ -326,29 +410,29 @@ function Grafico(options) {
             to: 2,
             loop: options.animazione.loop,
             script: [{
-                    props: {
-                        range: [
-                            [-2, 2],
-                            [-1, 1]
-                        ]
-                    }
-                },
-                {
-                    props: {
-                        range: [
-                            [-4, 4],
-                            [-2, 2]
-                        ]
-                    }
-                },
-                {
-                    props: {
-                        range: [
-                            [-2, 2],
-                            [-1, 1]
-                        ]
-                    }
-                },
+                props: {
+                    range: [
+                        [-2, 2],
+                        [-1, 1]
+                    ]
+                }
+            },
+            {
+                props: {
+                    range: [
+                        [-4, 4],
+                        [-2, 2]
+                    ]
+                }
+            },
+            {
+                props: {
+                    range: [
+                        [-2, 2],
+                        [-1, 1]
+                    ]
+                }
+            },
             ]
         });
     }

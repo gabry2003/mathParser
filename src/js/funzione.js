@@ -222,7 +222,8 @@ Funzione.interpreta = function(funzione, obj) {
     // Splitto per il + o per il - l'espressione in più termini (es. termine con la x^2 ecc...)
     let partiStringa = MathSolver.splittaEspressione(funzione, ['+', '-']);
     // Adesso divido ogni termine in parte letterale e numerica
-    const termini = partiStringa.map(Termine.interpreta);
+    console.log('partiStringa', partiStringa);
+    const termini = partiStringa.map(string => Termine.interpreta(string));
 
     if (obj) { // Se devo modificare un oggetto
         obj.membri = membri;

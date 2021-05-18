@@ -1,4 +1,5 @@
-const mode = 'production'; // or production
+// production or development
+const mode = 'development';
 
 module.exports = {
     mode: mode,

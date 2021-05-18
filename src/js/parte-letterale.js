@@ -25,7 +25,7 @@ function ParteLetterale(options) {
      * @type {string}
      * @default 0
      */
-    this.lettera = 0;
+    this.lettera = null;
     /**
      * Esponente della parte letterale
      * 
@@ -33,20 +33,17 @@ function ParteLetterale(options) {
      * @type {number}
      * @default {}
      */
-    this.esponente = {};
+    this.esponente = 0;
 
     switch (typeof(options)) { // In base al tipo di dato delle opzioni che sono state passate
-        case 'ParteLetteraleOptions': // Se ha passato un oggetto di tipo ParteLetteraleOptions
-            // Prendo le opzioni
-            this.lettera = options.lettera;
-            this.esponente = options.esponente;
-            break;
         case 'string': // Se ha passato una stringa
             // Intrepreto la stringa e mi prendo i dati necessari
             ParteLetterale.interpreta(options, this);
             break;
-        default:
-            throw 'Per favore passa un oggetto di tipo ParteLetteraleOptions oppure una stringa!';
+        default:    // Se ha passato un oggetto di tipo ParteLetteraleOptions
+            // Prendo le opzioni
+            this.lettera = options.lettera;
+            this.esponente = options.esponente;
     }
 
     /**
@@ -81,6 +78,9 @@ function ParteLetterale(options) {
  * @returns {ParteLetterale} Parte letterale interpretata
  */
 ParteLetterale.interpreta = function(parteLetterale, obj) {
+    console.log('parteLetterale', parteLetterale);
+    console.log('obj', obj);
+    
     // Se non c'è nessuna parte letterale
     if (parteLetterale == null) {
         if (obj) { // Se devo modificare un oggetto

@@ -99,9 +99,9 @@ function MathSolver(options) {
      * @param {string} [nome] Nome del punto
      */
     this.aggiungiPunto = function(x, y, nome) {
-        if (puntiAttivi.filter(punto => punto.x == x && punto.y == y).length == 0) { // Se questo punto non esiste già
+        if (this.puntiAttivi.filter(punto => punto.x == x && punto.y == y).length == 0) { // Se questo punto non esiste già
             // Lo aggiungo
-            puntiAttivi.push({
+            this.puntiAttivi.push({
                 x: x,
                 y: y
             });
@@ -167,13 +167,14 @@ function MathSolver(options) {
             if (typeof(funzioni) == 'string') { // Se è stata passata una sola stringa
                 funzioni = [funzioni]; // Lo trasformo in array
             }
-            let url = new URL(options.grafico.pagina);
-            url.searchParams.append('funzioni', encodeURIComponent(JSON.stringify(funzioni))); // Aggiungo le funzioni
+
+            let url = new URL(options.grafico.pagina, `https://prova.it/`);
+            url.searchParams.append('funzioni', JSON.stringify(funzioni)); // Aggiungo le funzioni
             // Se devo aggiungere i punti
-            if (options.grafico.punti) {
-                url.searchParams.append('punti', encodeURIComponent(JSON.stringify(punti))); // Aggiungo i punti
+            if (options.grafico.punti && punti) {
+                url.searchParams.append('punti', JSON.stringify(punti)); // Aggiungo i punti
             }
-            url = url.toString();
+            url = url.toString().replace('https://prova.it/', '');
 
             console.log('url', url);
             options.grafico.elemento.src = url; // Carico il grafico nella pagina
