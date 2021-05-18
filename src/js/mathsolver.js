@@ -12,6 +12,8 @@ String.prototype.isAlpha = function() {
  * @property {string} x - Ascissa del punto
  * @property {string} y - Ordinata punto
  * @property {string} nome - Nome del punto (opzionale)
+ * @property {string} background - Colore di sfondo del punto (opzionale)
+ * @property {string} foreground - Colore di testo del punto (opzionale)
  * @author Gabriele Princiotta <gabriprinciott@gmail.com>
  * @version 1.0
  */
@@ -331,9 +333,9 @@ function MathSolver(options) {
         probabiliZero = probabiliZero.concat(divisoriICoefficiente);
         // Aggiungo i rapporti tra i divisori del termine noto e i divisori del I coefficiente
         // Per ogni divisore del termine noto
-        for (divisore in divisoriTermineNoto) {
+        for (let divisore in divisoriTermineNoto) {
             // Per ogni divisore del primo coefficiente
-            for (divisore2 in divisoriICoefficiente) {
+            for (let divisore2 in divisoriICoefficiente) {
                 probabiliZero.push(divisore / divisore2);
             }
         }
@@ -363,7 +365,7 @@ function MathSolver(options) {
                 risultato = risultato * (zeroPolinomio);
             }
 
-            let griglia = `<table class="table tabella-ruffini">
+            let griglia = `<table class="table tabella-ruffini text-white">
     <tbody>
     <tr>
         <td></td>`;
@@ -443,7 +445,7 @@ function MathSolver(options) {
             });
 
             scomposizione += `<div class="col d-flex justify-content-center">
-    <div class="card bg-dark text-white mb-4">
+    <div class="card bg-primary text-white mb-4">
         <div class="card-header">${this.toLatex('\\text{Scomposizione con Ruffini}')}</div>
         <div class="card-body">
             ${this.toLatex('\\frac {' + polinomio + '}' + ' {x-' + this.controllaParentesi(zeroPolinomio) + '}' + (controllaMeno !== '' ? ' = ' + controllaMeno : ' '))}
@@ -524,7 +526,7 @@ function MathSolver(options) {
                 const equazioneRisolta = this.risolviEquazione(`${scomposta.equazione[i]}=0`, null, asse, false, false);
                 // Mostro a schermo i passaggi per la risoluzione dell'equazione
                 options.elementi.equazioniRisolte.innerHTML += `<div class="col-md-6">
-    <div class="card bg-dark text-white mb-4">
+    <div class="card bg-primary text-white mb-4">
         <div class="card-header">${this.toLatex('\\text{Risoluzione equazione}')}</div>
         <div class="card-body">
             ${equazioneRisolta.code}
@@ -610,7 +612,7 @@ function MathSolver(options) {
      * @param {number} grado Grado dell'equazione
      * @param {string} asse Asse con cui è stata fatta l'intersezione
      * @param {boolean} [sistema=true] Se risolvere e basta o fare il sistema
-     * @param {booolean} [pulisci=true] Se pulire i div
+     * @param {boolean} [pulisci=true] Se pulire i div
      * @returns {*} Risultati dell'equazione e il codice da stampare a schermo
      */
     this.risolviEquazione = function(equazione, grado, asse, sistema = true, pulisci = true) {
@@ -622,8 +624,11 @@ function MathSolver(options) {
 
         switch (grado) {
             case 1:
-                options.elementi.passaggiScomposizione.style.css = 'none';
-                options.elementi.equazioniRisolte.style.css = 'none';
+                if (pulisci) {
+                    options.elementi.passaggiScomposizione.style.css = 'none';
+                    options.elementi.equazioniRisolte.style.css = 'none';
+                }
+
                 if (sistema) code += `<td class="spazio-sistema"></td>
 <td class="graffa-sistema">`;
                 code += this.toLatex(equazione);
@@ -666,8 +671,11 @@ function MathSolver(options) {
                 }
                 break;
             case 2:
-                options.elementi.passaggiScomposizione.style.css = 'none';
-                options.elementi.equazioniRisolte.style.css = 'none';
+                if (pulisci) {
+                    options.elementi.passaggiScomposizione.style.css = 'none';
+                    options.elementi.equazioniRisolte.style.css = 'none';
+                }
+
                 if (sistema) code += `<td class="spazio-sistema"></td>
 <td class="graffa-sistema">`;
                 code += this.toLatex(equazione);
@@ -773,7 +781,7 @@ function MathSolver(options) {
             y: 'x = 0'
         };
 
-        let code = `<h6>${this.toLatex('\\text{Intersezione con l\'asse ' + asse + '}')}</h6>
+        let code = `<h5>${this.toLatex('\\text{Intersezione con l\'asse ' + asse + '}')}</h5>
 <table tborder=0>
     <tbody>
         <tr>

@@ -54,7 +54,7 @@
  * @version 1.0
  */
 function Grafico(options) {
-    if(options == null || options == undefined) options = {};
+    if (options == null || options == undefined) options = {};
 
     // Carico i valori di default
     options.font = options.font || 'Poppins';
@@ -63,7 +63,7 @@ function Grafico(options) {
     if (options.colori == undefined || options.colori == null) {
         options.colori = {
             assi: '#444444',
-            punti: '#DD4B44',
+            punti: '#f400a1',
             puntiFunzione: '#4D4DFF',
             funzione: '#484848',
             testo: '#444444'
@@ -77,8 +77,7 @@ function Grafico(options) {
     }
 
     if (options.assi == undefined || options.assi == null) {
-        options.assi = [
-            {
+        options.assi = [{
                 min: -20,
                 max: 20
             },
@@ -88,15 +87,15 @@ function Grafico(options) {
             }
         ];
     } else {
-        for(let i = 0;i < options.assi.length;i++) {
-            if(options.assi[i] == undefined || options.assi[i] == null) {
+        for (let i = 0; i < options.assi.length; i++) {
+            if (options.assi[i] == undefined || options.assi[i] == null) {
                 options.assi[i] = {
                     min: -20,
                     max: 20
                 };
-            }else {
-                if(options.assi[i].min == undefined || options.assi[i].min == null) options.assi[i].min = -20;
-                if(options.assi[i].max == undefined || options.assi[i].max == null) options.assi[i].max = 20;
+            } else {
+                if (options.assi[i].min == undefined || options.assi[i].min == null) options.assi[i].min = -20;
+                if (options.assi[i].max == undefined || options.assi[i].max == null) options.assi[i].max = 20;
             }
         }
     }
@@ -178,15 +177,6 @@ function Grafico(options) {
      */
     this.funzioni = JSON.parse(this._GET.get('funzioni'));
 
-    // Trasformo le funzioni in espressioni
-    /**
-     * Esppressioni per calcolare cosa disegnare nel grafico
-     * 
-     * @name Grafico#espressioni
-     * @type {Array.<string>}
-     * @default []
-     */
-    this.espressioni = this.funzioni.map(funzione => funzione.trim().replace('y=', '').replace('x=', ''));
 
     /**
      * punti da disegnare nel grafico
@@ -234,6 +224,39 @@ function Grafico(options) {
     let griglia = view.grid({ width: 1, divideX: 40, divideY: 20, opacity: 0.25 });
     mathbox.set('focus', options.focus);
 
+    // Carico gli assi
+    let assii = [];
+
+    options.assi.forEach((asse, i) => {
+        assii.push(view.axis({
+            axis: (i + 1),
+            width: 3,
+            detail: asse.max * 2,
+            color: options.colori.assi
+        }));
+    });
+
+    // Carico tutte le funzioni
+    console.log('funzioni', this.funzioni);
+    let funcs = this.funzioni;
+
+    funzioniGrafico = view.interval({
+        expr: function(emit, x, i, t) {
+            funcs.forEach(funzione => {
+                const y = math.parse(funzione.trim().replace('y=', '').replace('x=', '')).evaluate({
+                    x: x
+                });
+
+                emit(x, y);
+            });
+        },
+        // Numero di x per cui trovare la y
+        width: 64,
+        // 2 = 2D, 3 = 3D
+        channels: 2,
+        items: funcs.length
+    });
+
     let curve =
         view.line({
             width: 4,
@@ -246,14 +269,14 @@ function Grafico(options) {
             color: options.colori.puntiFunzione,
         });
 
-    /*let ticks =
+    let ticks =
         view.ticks({
             width: 5,
             size: 15,
             color: options.colori.testo,
         });
 
-    let format =
+    /*let format =
         view.format({
             digits: 2,
             weight: 'bold',
@@ -265,39 +288,6 @@ function Grafico(options) {
             zIndex: 1,
         });*/
 
-    // Carico gli assi
-    let assii = [];
-
-    options.assi.forEach((asse, i) => {
-        assii.push(view.axis({
-            axis: (i + 1),
-            width: 3,
-            detail: 40,
-            color: options.colori.assi
-        }));
-    });
-
-    // Carico tutte le funzioni
-    console.log('espressioni', this.espressioni);
-    let exps = this.espressioni;
-
-    funzioniGrafico = view.interval({
-        expr: function (emit, x, i, t) {
-            exps.forEach(espressione => {
-                const y = math.parse(espressione).evaluate({
-                    x: x
-                });
-
-                emit(x, y);
-            });
-        },
-        // Numero di x per cui trovare la y
-        width: 64,
-        // 2 = 2D, 3 = 3D
-        channels: 2,
-        items: exps.length
-    });
-    
     options.assi.forEach((asse, i) => {
         const nomi = ['x', 'y'];
         const offset = [
@@ -312,7 +302,7 @@ function Grafico(options) {
             [this.xMax, 0],
             [0, this.yMax]
         ];
-        
+
         const scala = view.scale({
             axis: (i + 1),
             divide: asse.max / 2,
@@ -390,10 +380,10 @@ function Grafico(options) {
                         [punto.x, punto.y]
                     ]
                 }),
-                size: 22,
-                color: options.colori.punti,
+                size: 30,
+                color: punto.foreground ? punto.foreground : options.colori.punti, // Se questo punto ha un colore di testo uso quello
                 outline: 1,
-                background: 'transparent',
+                background: punto.background ? punto.background : 'transparent', // Se questo punto ha un colore di sfondo uso quello
                 offset: [10, 10],
                 zIndex: 1
             }));
@@ -410,29 +400,29 @@ function Grafico(options) {
             to: 2,
             loop: options.animazione.loop,
             script: [{
-                props: {
-                    range: [
-                        [-2, 2],
-                        [-1, 1]
-                    ]
-                }
-            },
-            {
-                props: {
-                    range: [
-                        [-4, 4],
-                        [-2, 2]
-                    ]
-                }
-            },
-            {
-                props: {
-                    range: [
-                        [-2, 2],
-                        [-1, 1]
-                    ]
-                }
-            },
+                    props: {
+                        range: [
+                            [-2, 2],
+                            [-1, 1]
+                        ]
+                    }
+                },
+                {
+                    props: {
+                        range: [
+                            [-4, 4],
+                            [-2, 2]
+                        ]
+                    }
+                },
+                {
+                    props: {
+                        range: [
+                            [-2, 2],
+                            [-1, 1]
+                        ]
+                    }
+                },
             ]
         });
     }

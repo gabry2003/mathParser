@@ -40,7 +40,7 @@ function ParteLetterale(options) {
             // Intrepreto la stringa e mi prendo i dati necessari
             ParteLetterale.interpreta(options, this);
             break;
-        default:    // Se ha passato un oggetto di tipo ParteLetteraleOptions
+        default: // Se ha passato un oggetto di tipo ParteLetteraleOptions
             // Prendo le opzioni
             this.lettera = options.lettera;
             this.esponente = options.esponente;
@@ -78,9 +78,6 @@ function ParteLetterale(options) {
  * @returns {ParteLetterale} Parte letterale interpretata
  */
 ParteLetterale.interpreta = function(parteLetterale, obj) {
-    console.log('parteLetterale', parteLetterale);
-    console.log('obj', obj);
-    
     // Se non c'è nessuna parte letterale
     if (parteLetterale == null) {
         if (obj) { // Se devo modificare un oggetto

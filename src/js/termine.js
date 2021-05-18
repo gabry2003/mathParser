@@ -43,7 +43,7 @@ function Termine(options) {
             // Intrepreto la stringa e mi prendo i dati necessari
             Termine.interpreta(options, this);
             break;
-        default:    // Se ha passato un oggetto di tipo TermineOptions
+        default: // Se ha passato un oggetto di tipo TermineOptions
             // Prendo le opzioni
             this.coefficiente = options.coefficiente;
             this.parteLetterale = options.parteLetterale;
@@ -82,9 +82,6 @@ function Termine(options) {
  * @returns {Termine} Termine interpretato
  */
 Termine.interpreta = function(termine, obj) {
-    console.log('termine', termine);
-    console.log('obj', obj);
-
     let coefficiente = '';
     let parteLetterale = '';
     let prendiCoefficiente = true;
