@@ -1,3 +1,4 @@
+import { ParteLetterale } from './parte-letterale';
 import { Termine } from './termine';
 window.Termine = Termine;
 
@@ -5,9 +6,7 @@ window.Termine = Termine;
  * Opzioni per l'inizializzazione di un oggetto di tipo Funzione
  * 
  * @typedef {Object} FunzioneOptions
- * @property {Array.<Termine>} termini - Termini di cui è composta la funzione
- * @property {Array.<string>} membri - membri di cui è composta la funzione
- * @property {string} parteFissa - parte della funzione che non viene modificata
+ * @property {Array.<Membro>} membri - membri di cui è composta la funzione
  * @author Gabriele Princiotta <gabriprinciott@gmail.com>
  * @version 1.0
  */
@@ -17,7 +16,7 @@ window.Termine = Termine;
  * 
  * @typedef {Object} Membro
  * @property {Array.<Termine>} numeratore - Numeratore del membro
- * @property {Array.<string>} denominatore - Numeratore del membro (nel caso in cui non ci sia una funzione fratta è 1)
+ * @property {Array.<Termine>} denominatore - Numeratore del membro (nel caso in cui non ci sia una funzione fratta è 1)
  * @author Gabriele Princiotta <gabriprinciott@gmail.com>
  * @version 1.0
  */
@@ -36,14 +35,6 @@ window.Termine = Termine;
  */
 function Funzione(options) {
     /**
-     * Termini di cui è composta la funzione
-     * 
-     * @name Funzione#termini
-     * @type {Array.<Termine>}
-     * @default []
-     */
-    this.termini = [];
-    /**
      * Membri di cui è composta la funzione.
      * Ogni membro è composto da numeratore e denominatore, a loro volta composti da termini
      * 
@@ -52,35 +43,11 @@ function Funzione(options) {
      * @default []
      */
     this.membri = [];
-    /**
-     * Parte fissa della funzione o dell'equazione, ovvero quella parte che non viene modificata.
-     * Es. y=2x^2+2
-     * La parte fissa è y
-     * 
-     * x=33
-     * La parte fissa è x
-     * 
-     * Serve per poter stampare la funzione sotto forma di stringa salvandosi la parte che non viene mai modificata.
-     * 
-     * @name Funzione#parteFissa
-     * @type {string}
-     * @default y
-     * @example
-     * let funzione = new Funzione('y=2x^2+2');
-     * // Completo la funzione
-     * funzione.completa();
-     * // Stampo la funzione come stringa
-     * console.log(funzione.toString());
-     * // y=2x^2+0x+2
-     */
-    this.parteFissa = 'y';
 
     switch (typeof(options)) { // In base al tipo di dato delle opzioni che sono state passate
         case 'FunzioneOptions': // Se ha passato un oggetto di tipo FunzioneOptions
             // Prendo le opzioni
-            this.termini = options.termini;
             this.membri = options.membri;
-            this.parteFissa = options.parteFissa;
             break;
         case 'string': // Se ha passato una stringa
             // Intrepreto la stringa e mi prendo i dati necessari
@@ -100,8 +67,8 @@ function Funzione(options) {
      */
     this.termineNoto = function() {
         let termine = 0;
-        for (let i = 0; i < this.termini.length; i++) {
-            if (this.termini[i].parteLetterale == null) return this.termini[i].coefficiente;
+        for (let i = 0; i < this.membri[1].numeratore.length; i++) {
+            if (this.membri[1].numeratore[i].parteLetterale == null) return this.membri[1].numeratore[i].coefficiente;
         }
         return termine;
     }
@@ -115,7 +82,18 @@ function Funzione(options) {
      */
     this.grado = function() {
         // Cerco tra tutti i termini quello con il grado maggiore
-        return Math.max(...this.termini.map(termine => {
+        let elencoTermini = [];
+        this.membri.forEach(membro => {
+            membro.numeratore.forEach(termine => {
+                elencoTermini.push(termine);
+            });
+
+            membro.denominatore.forEach(termine => {
+                elencoTermini.push(termine);
+            })
+        })
+
+        return Math.max(...elencoTermini.map(termine => {
             if (termine.parteLetterale) {
                 return termine.parteLetterale.esponente;
             } else {
@@ -132,12 +110,24 @@ function Funzione(options) {
      * @param {number} exp Esponente che deve avere il termine nella parte letterale
      * @return {Termine} Termine con quell'esponente
      */
-    this.getByExp = function(exp) {
-        return this.termini.filter(termine => {
+    this.getByExp = function(exp, membro = 1) {
+        let elencoTermini = [];
+        membro = this.membri[membro];
+        membro.numeratore.forEach(termine => {
+            elencoTermini.push(termine);
+        });
+
+        membro.denominatore ? membro.denominatore.forEach(termine => {
+            elencoTermini.push(termine);
+        }) : null;
+
+        let result = elencoTermini.filter(termine => {
             if (termine.parteLetterale) {
                 return termine.parteLetterale.esponente == exp;
             }
-        })[0];
+        });
+        if (result.length == 1) return result[0];
+        return result;
     }
 
     /**
@@ -149,7 +139,11 @@ function Funzione(options) {
      */
     this.ordina = function() {
         // Ordino l'array dei termini in modo decrescente in base all'esponente della parte letterale
-        this.termini.sort((a, b) => (b.parteLetterale ? b.parteLetterale.esponente : 0) - (a.parteLetterale ? a.parteLetterale.esponente : 0));
+        // Devo ordinare quindi i termini del numeratore e del denominatore di ogni membro
+        this.membri.forEach(membro => {
+            membro.numeratore.sort((a, b) => (b.parteLetterale ? b.parteLetterale.esponente : 0) - (a.parteLetterale ? a.parteLetterale.esponente : 0));
+            membro.denominatore ? membro.denominatore.sort((a, b) => (b.parteLetterale ? b.parteLetterale.esponente : 0) - (a.parteLetterale ? a.parteLetterale.esponente : 0)) : null;
+        });
     }
 
     /**
@@ -161,34 +155,44 @@ function Funzione(options) {
      */
     this.completa = function() {
         const gradoFunzione = this.grado(); // Prendo il grado
-        for (let i = gradoFunzione; i > 0; i--) { // Parto dal grado fino ad esponente 1
-            // Se non c'è un termine con questo esponente
-            if (this.termini.filter(termine => {
-                    if (termine.parteLetterale) {
-                        return termine.parteLetterale.esponente == i;
-                    }
-                }).length == 0) {
+        const complete = (parteFrazione) => {
+            for (let i = gradoFunzione; i > 0; i--) { // Parto dal grado fino ad esponente 1
+                // Se non c'è un termine con questo esponente
+                if (parteFrazione.filter(termine => {
+                        if (termine.parteLetterale) {
+                            return termine.parteLetterale.esponente == i;
+                        }
+                    }).length == 0) {
+                    // Lo aggiungo
+                    parteFrazione.push(new Termine({
+                        coefficiente: 0,
+                        parteLetterale: new ParteLetterale({
+                            lettera: 'x',
+                            esponente: i
+                        })
+                    }));
+                }
+            }
+            // Se manca il coefficiente
+            if (parteFrazione.length < (gradoFunzione + 1)) {
                 // Lo aggiungo
-                this.termini.push(new Termine({
+                parteFrazione.push(new Termine({
                     coefficiente: 0,
                     parteLetterale: new ParteLetterale({
                         lettera: 'x',
-                        esponente: i
+                        esponente: 0
                     })
                 }));
             }
-        }
-        // Se manca il coefficiente
-        if (this.termini.length < (gradoFunzione + 1)) {
-            // Lo aggiungo
-            this.termini.push(new Termine({
-                coefficiente: 0,
-                parteLetterale: new ParteLetterale({
-                    lettera: 'x',
-                    esponente: 0
-                })
-            }));
-        }
+        };
+
+        // Completo tutti i membri
+        this.membri.forEach(membro => {
+            // E per ogni membro completo sia il numeratore che il denominatore
+            complete(membro.numeratore);
+            complete(membro.denominatore);
+        });
+
         // Ordino la funzione
         this.ordina();
     }
@@ -224,7 +228,7 @@ function Funzione(options) {
      * Metodo che trova il dominio della funzione
      * 
      * @method
-     * @name Funzione#tipologia
+     * @name Funzione#dominio
      */
     this.dominio = function() {
 
@@ -241,6 +245,135 @@ function Funzione(options) {
     }
 
     /**
+     * Metodo che semplifica la funzione
+     * 
+     * @method
+     * @name Funzione#semplifica
+     */
+    this.semplifica = function() {
+        const semplificaParteFrazione = (parte) => {
+            // Se ci sono termini che hanno la stessa esatta parte letterale sommo i coefficienti e trovo un nuovo termine
+            let terminiDaTogliere = [];
+            let valori = {};
+
+            // Prendo tutti i termini
+            for (let i = 0; i < parte.length; i++) {
+                const parteLetteraleString = parte[i].parteLetterale ? parte[i].parteLetterale.toString() : ''; // parte letterale come stringa
+                // Se ho già memorizzato un valore per questa parte letterale, parto da quel valore + il coefficiente, altrimenti parto dal coefficiente
+                let valore = valori[parteLetteraleString] ? (valori[parteLetteraleString] + parte[i].coefficiente) : parte[i].coefficiente;
+
+                // Per ogni termine prendo il termine successivo
+                for (let j = i; j < parte.length; j++) {
+                    const parteLetteraleString2 = parte[j].parteLetterale ? parte[j].parteLetterale.toString() : '';
+                    if (parteLetteraleString == parteLetteraleString2) { // Se i due termini hanno la stessa parte letterale
+                        // Sommo il coefficiente
+                        valore += parte[j].coefficiente;
+                        terminiDaTogliere.push(parteLetteraleString);
+                        terminiDaTogliere.push(parteLetteraleString2);
+                    }
+                }
+
+                // memorizzo il valore
+                valori[parteLetteraleString] = valore;
+            }
+
+            // Aggiungo i termini nuovi
+            for (let key in Object.keys(valori)) {
+                parte.push(new Termine({
+                    coefficiente: valori[key],
+                    parteLetterale: new ParteLetterale(key)
+                }))
+            }
+
+            // Elimino tutti i termini che hanno coefficiente zero e quelli nella lista da tgogliere
+            parte = parte.filter(termine => !terminiDaTogliere.includes(termine.toString() && termine.coefficiente !== 0));
+        };
+
+        // Per ogni membro
+        this.membri.forEach(membro => {
+            // Semplifico il numeratore e il denominatore
+            semplificaParteFrazione(membro.numeratore);
+            semplificaParteFrazione(membro.denominatore);
+        });
+    }
+
+    /**
+     * Metodo che dice se la funzione è in forma esplicita
+     * 
+     * @method
+     * @name Funzione#isFormaEsplicita
+     */
+    this.isFormaEsplicita = function() {
+        // La funzione è in forma esplicita quando a primo membro è presente solo la y di grado 1 e nessun altro termine
+        return this.membri[0].numeratore.length == 1 &&
+            this.membri[0].numeratore[0].parteLetterale.lettera == 'y' &&
+            this.membri[0].numeratore[0].parteLetterale.esponente == 1;
+    }
+
+    /**
+     * Metodo che dice se la funzione è in forma implicita
+     * 
+     * @method
+     * @name Funzione#isFormaImplicita
+     */
+    this.isFormaImplicita = function() {
+        // Fondamentalmente una funzione è in forma implicita se non è in forma esplicita
+        return !this.isFormaEsplicita();
+    }
+
+    /**
+     * Metodo che trasforma la funzione in forma esplicita, utilizzato nelle rette
+     * 
+     * @method
+     * @name Funzione#formaEsplicita
+     */
+    this.formaEsplicita = function() {
+        if (!this.isFormaEsplicita()) { // Se la funzione è già in forma esplicita non faccio nulla
+            // Per portare la funzione in forma esplicita sposto tutti i termini del primo membro al secondo membro tranne la y
+            this.membri[0].numeratore.forEach(termine => {
+                if (termine.parteLetterale.lettera == 'y' && termine.parteLetterale.esponente == 1) return;
+
+                this.membri[1].numeratore.push(new Termine({
+                    coefficiente: -termine.coefficiente,
+                    parteLetterale: termine.parteLetterale
+                }));
+            });
+
+            // Elimino tutto tranne la y al primo membro
+            this.membri[0].numeratore = this.membri[0].numeratore.filter(termine => termine.parteLetterale.lettera == 'y' && termine.parteLetterale.esponente == 1);
+
+            this.ordina(); // Ordino la funzione
+        }
+    }
+
+    /**
+     * Metodo che trasforma la funzione in forma implicita
+     * 
+     * @method
+     * @name Funzione#formaImplicita
+     */
+    this.formaImplicita = function() {
+        if (!this.isFormaImplicita()) { // Se la funzione è giä in forma implicita non faccio nulla
+            // Per portare la funzione in forma implicita sposto tutti i termini del secondo membro al primo e nel secondo lascio lo zero
+            this.membri[1].numeratore.forEach(termine => {
+                this.membri[0].numeratore.push(new Termine({
+                    coefficiente: -termine.coefficiente,
+                    parteLetterale: termine.parteLetterale
+                }));
+            });
+
+            this.membri[1].numeratore = [
+                new Termine({
+                    coefficiente: 0,
+                    parteLetterale: null
+                })
+            ];
+
+            this.ordina(); // Ordino la funzione
+        }
+    }
+
+    /**
      * Metodo che ritorna la funzione come stringa.
      * Molto utile nel caso in cui la funzione sia stata modificata da uno dei metodi per poterla stampare a schermo con le modifiche
      * 
@@ -249,14 +382,42 @@ function Funzione(options) {
      * @returns {string} Funzione scritta sotto forma di stringa
      */
     this.toString = function() {
-        let string;
-        this.termini.forEach(termine => {
-            string += termine.toString()
-        });
-        // Se il primo carattere è un +  lo rimuovo
-        if (string[0] == '+') string = string.substring(1);
+        /**
+         * Funzione che stampa a schermo un membro
+         * 
+         * @param {*} membro 
+         */
+        const membroString = (membro) => {
+            /**
+             * Funzione che stampa a schermo una parte della frazione
+             * 
+             * @param {*} frazione 
+             */
+            const terminiString = (termini) => {
+                let string = ``;
+                termini.forEach(termine => {
+                    string += termine.toString();
+                });
 
-        return string;
+                // Se il primo carattere è un +  lo rimuovo
+                if (string[0] == '+') string = string.substring(1);
+                return string;
+            };
+
+            let string = ``;
+
+            // Se il denominatore è presente
+            if (membro.denominatore ? membro.denominatore.length > 0 : false) {
+                // Stampo a schermo il numeratore e il denominatore
+                string += `\\frac {${terminiString(membro.numeratore)}} {${terminiString(membro.denominatore)}}`;
+            } else { // Altrimenti
+                string += terminiString(membro.numeratore);
+            }
+
+            return string;
+        };
+
+        return `${membroString(this.membri[0])}=${membroString(this.membri[1])}`;
     }
 }
 
@@ -271,27 +432,57 @@ function Funzione(options) {
  * @returns {Funzione} Funzione interpretata
  */
 Funzione.interpreta = function(funzione, obj) {
-    const membri = funzione.split('='); // Prendo i membri separando dall'uguale
-    const parteFissa = funzione.includes('x=') ? 'x' : 'y'; // Prendo la parte fissa della funzione
+    funzione = funzione.trim(); // Levo tutti gli spazi dalla funzione
+    let membri = funzione.split('='); // Prendo i membri separando dall'uguale
+    // Intepretro ogni membro
+    const interpretaMembro = function(membro) {
+        let numeratore;
+        let denominatore;
+        let partiStringa;
 
-    funzione = funzione.trim(); // Levo tutti gli spazi
-    funzione = funzione.replace('x=', '').replace('y=', ''); // Lascio solo l'equazione
-    // Splitto per il + o per il - l'espressione in più termini (es. termine con la x^2 ecc...)
-    let partiStringa = MathSolver.splittaEspressione(funzione, ['+', '-']);
-    // Adesso divido ogni termine in parte letterale e numerica
-    const termini = partiStringa.map(string => Termine.interpreta(string));
+        const interpretaEspressione = (espressione) => {
+            // Splitto per il + o per il - l'espressione in più termini (es. termine con la x^2 ecc...)
+            partiStringa = MathSolver.splittaEspressione(espressione, ['+', '-']);
+
+            return partiStringa.map(string => Termine.interpreta(string));
+        };
+
+        // Se il membro contiene una frazione
+        if (membro.includes('frac')) {
+            const getWordsBetweenCurlies = (str) => {
+                var results = [],
+                    re = /{([^}]+)}/g,
+                    text;
+
+                while (text = re.exec(str)) {
+                    results.push(text[1]);
+                }
+                return results;
+            };
+            let membriFrazione = getWordsBetweenCurlies(membro);
+            numeratore = interpretaEspressione(membriFrazione[0]);
+            denominatore = interpretaEspressione(membriFrazione[1]);
+        } else { // Altrimenti
+            // Adesso divido ogni termine in parte letterale e numerica
+            numeratore = interpretaEspressione(membro);
+            denominatore = null;
+        }
+
+        return {
+            numeratore: numeratore,
+            denominatore: denominatore
+        };
+    };
+
+    membri = membri.map(membro => interpretaMembro(membro));
 
     if (obj) { // Se devo modificare un oggetto
         obj.membri = membri;
-        obj.parteFissa = parteFissa;
-        obj.termini = termini;
 
         return obj;
     } else { // Altrimenti
         return new Funzione({
-            membri: membri,
-            parteFissa: parteFissa,
-            termini: termini
+            membri: membri
         });
     }
 }

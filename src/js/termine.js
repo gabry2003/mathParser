@@ -64,7 +64,7 @@ function Termine(options) {
         } else if (this.coefficiente == -1) {
             string = `-${this.parteLetterale.toString()}`;
         } else {
-            string = MathSolver.numeroRazionale(this.coefficiente) + this.parteLetterale.toString()
+            string = MathSolver.numeroRazionale(this.coefficiente) + (this.parteLetterale ? this.parteLetterale.toString() : '')
         }
 
         return string;
