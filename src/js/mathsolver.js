@@ -111,10 +111,10 @@ function MathSolver(options) {
             // Prendo la lettera successiva per dare il nome al punto
             const nomePunto = this.letteraAttuale ? String.fromCharCode(this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1) : 'A';
             this.letteraAttuale = nomePunto;
-            let code = `${options.elementi.listaPunti.innerHTML}<li style="list-style-type: none;">`;
-            code += this.toLatex(`${nomePunto}(${this.numeroRazionale(x)}, ${this.numeroRazionale(y)})`);
+            let code = `${document.querySelector(options.elementi.listaPunti).innerHTML}<li style="list-style-type: none;">`;
+            code += this.toLatex(`${nomePunto}(${MathSolver.numeroRazionale(x)}, ${MathSolver.numeroRazionale(y)})`);
             code += `</li>`;
-            options.elementi.listaPunti.innerHTML = code;
+            document.querySelector(options.elementi.listaPunti).innerHTML = code;
         }
     }
 
@@ -125,7 +125,7 @@ function MathSolver(options) {
      * @name MathSolver#pulisciPunti
      */
     this.pulisciPunti = function() {
-        options.elementi.listaPunti.innerHTML = '';
+        document.querySelector(options.elementi.listaPunti).innerHTML = '';
         this.letteraAttuale = null;
         this.puntiAttivi.length = 0;
     }
@@ -137,11 +137,12 @@ function MathSolver(options) {
      * @name MathSolver#togliRisultato
      */
     this.togliRisultato = function() {
-        options.elementi.risultato.style.display = 'none';
-        options.elementi.passaggiScomposizione.style.display = 'none';
-        options.elementi.equazioniRisolte.style.display = 'none';
-        options.elementi.passaggiScomposizione.innerHTML = '';
-        options.elementi.equazioniRisolte.innerHTML = '';
+        console.log('bbb');
+        document.querySelector(options.elementi.risultato).style.display = 'none';
+        document.querySelector(options.elementi.passaggiScomposizione).style.display = 'none';
+        document.querySelector(options.elementi.equazioniRisolte).style.display = 'none';
+        document.querySelector(options.elementi.passaggiScomposizione).innerHTML = '';
+        document.querySelector(options.elementi.equazioniRisolte).innerHTML = '';
         pulisciPunti();
     }
 
@@ -152,7 +153,7 @@ function MathSolver(options) {
      * @name MathSolver#mostraRisultato
      */
     this.mostraRisultato = function() {
-        options.elementi.risultato.style.display = 'block';
+        document.querySelector(options.elementi.risultato).style.display = 'block';
     }
 
     /**
@@ -205,25 +206,6 @@ function MathSolver(options) {
     }
 
     /**
-     * Metodo che ritorna il numero sotto forma di frazione.
-     * Al momento questa funzione non fa nulla per continuare il corretto funzionamento del programma in quanto ci sono degli errori
-     * 
-     * @method
-     * @name MathSolver#numeroRazionale
-     * @param {number} value Numero da controllare
-     * @returns {*} Numero sotto forma di frazione
-     */
-    this.numeroRazionale = function(value) {
-        return value;
-        /*const frazione = math.fraction(math.number(value));
-        if (frazione.d !== 1) {
-            return `\\frac{${frazione.n.toString()}} {${frazione.d.toString()}}`;
-        } else {
-            return value;
-        }*/
-    }
-
-    /**
      * Se il numero passato come argomento è negativo lo mette tra parentesti, altrimenti lo lascia com'è
      * 
      * @method
@@ -233,7 +215,7 @@ function MathSolver(options) {
      * @returns {string} Numero come stringa e tra parentesi se negativo
      */
     this.controllaParentesi = function(numero) {
-        numero = this.numeroRazionale(numero);
+        numero = MathSolver.numeroRazionale(numero);
 
         if (numero < 0) return `(${numero})`;
 
@@ -494,14 +476,14 @@ function MathSolver(options) {
         let risultati = [];
 
         if (pulisci) {
-            options.elementi.passaggiScomposizione.innerHTML = '';
-            options.elementi.equazioniRisolte.innerHTML = '';
+            document.querySelector(options.elementi.passaggiScomposizione).innerHTML = '';
+            document.querySelector(options.elementi.equazioniRisolte).innerHTML = '';
         }
 
         const scomposta = this.scomponi(new Funzione(equazione));
         // Se l'equazione è scomponibile stampo a schermo la scomposizione
         if (scomposta.scomposizione !== '') {
-            options.elementi.passaggiScomposizione.innerHTML += scomposta.scomposizione;
+            document.querySelector(options.elementi.passaggiScomposizione).innerHTML += scomposta.scomposizione;
         }
         let equazioneScomposta = ``;
 
@@ -513,9 +495,6 @@ function MathSolver(options) {
 </td>`;
 
         if (scomposta.equazione.length > 0) { // Se l'equazione è stata scomposta
-            options.elementi.passaggiScomposizione.style.css = 'block';
-            options.elementi.equazioniRisolte.style.css = 'flex';
-
             // La stampo a schermo
             risultati = [];
             let equazioniScomposte = [];
@@ -525,7 +504,7 @@ function MathSolver(options) {
                 equazioneScomposta += `(${scomposta.equazione[i]})`;
                 const equazioneRisolta = this.risolviEquazione(`${scomposta.equazione[i]}=0`, null, asse, false, false);
                 // Mostro a schermo i passaggi per la risoluzione dell'equazione
-                options.elementi.equazioniRisolte.innerHTML += `<div class="col-md-6">
+                document.querySelector(options.elementi.equazioniRisolte).innerHTML += `<div class="col-md-6">
     <div class="card bg-primary text-white mb-4">
         <div class="card-header">${this.toLatex('\\text{Risoluzione equazione}')}</div>
         <div class="card-body">
@@ -539,8 +518,12 @@ function MathSolver(options) {
                 }
             }
 
-            options.elementi.passaggiScomposizione.style.css = 'block';
-            options.elementi.equazioniRisolte.style.css = 'flex';
+            // VIsualizzo a schermo i passaggi
+            document.querySelector(options.elementi.passaggiScomposizione).style.display = 'block';
+            document.querySelector(options.elementi.equazioniRisolte).style.display = 'flex';
+
+            /*console.log(document.querySelector(options.elementi.passaggiScomposizione));
+            console.log(document.querySelector(options.elementi.equazioniRisolte));*/
 
             equazioneScomposta += `=0`;
             // Visualizzo a schermo l'equazione scomposta
@@ -581,7 +564,7 @@ function MathSolver(options) {
             risultati.forEach((risultato, i) => {
                 if (sistema) code += `<td class="spazio-sistema"></td>
 <td class="graffa-sistema">`;
-                code += this.toLatex('x_\{' + (i + 1) + '\} = ' + this.numeroRazionale(risultato));
+                code += this.toLatex('x_\{' + (i + 1) + '\} = ' + MathSolver.numeroRazionale(risultato));
                 if (sistema) code += this.toLatex('y_\{' + (i + 1) + '\} = 0');
                 if (sistema) code += `
 </td>`;
@@ -625,8 +608,8 @@ function MathSolver(options) {
         switch (grado) {
             case 1:
                 if (pulisci) {
-                    options.elementi.passaggiScomposizione.style.css = 'none';
-                    options.elementi.equazioniRisolte.style.css = 'none';
+                    document.querySelector(options.elementi.passaggiScomposizione).style.display = 'none';
+                    document.querySelector(options.elementi.equazioniRisolte).style.display = 'none';
                 }
 
                 if (sistema) code += `<td class="spazio-sistema"></td>
@@ -641,13 +624,13 @@ function MathSolver(options) {
                     // Sposto il termine noto al secondo membro
                     if (sistema) code += `<td class="spazio-sistema"></td>
                 <td class="graffa-sistema">`;
-                    code += this.toLatex(espressione.termini[0].toString() + ' = ' + this.numeroRazionale(-(termineNoto)));
+                    code += this.toLatex(espressione.termini[0].toString() + ' = ' + MathSolver.numeroRazionale(-(termineNoto)));
                     if (sistema) code += `${this.toLatex(asse)}
                 </td>`;
 
                     // Divido il secondo membro per il coefficiente della x
                     // Se il coefficiente è diverso da 1
-                    let ascissa = this.numeroRazionale(Math.round((-(termineNoto) / espressione.termini[0].coefficiente) * 100, 2) / 100);
+                    let ascissa = MathSolver.numeroRazionale(Math.round((-(termineNoto) / espressione.termini[0].coefficiente) * 100, 2) / 100);
                     let ordinata = asse.split('=')[1];
 
                     if (espressione.termini[0].coefficiente !== 1) {
@@ -672,8 +655,8 @@ function MathSolver(options) {
                 break;
             case 2:
                 if (pulisci) {
-                    options.elementi.passaggiScomposizione.style.css = 'none';
-                    options.elementi.equazioniRisolte.style.css = 'none';
+                    document.querySelector(options.elementi.passaggiScomposizione).style.display = 'none';
+                    document.querySelector(options.elementi.equazioniRisolte).style.display = 'none';
                 }
 
                 if (sistema) code += `<td class="spazio-sistema"></td>
@@ -709,7 +692,7 @@ function MathSolver(options) {
                 if (sistema) code += `<td class="spazio-sistema"></td>
                 <td class="graffa-sistema">`;
 
-                code += this.toLatex(`x = \\frac{-${this.controllaParentesi((b ? b.coefficiente : 0))} \\pm \\sqrt{${this.numeroRazionale(delta)}}} {${this.controllaParentesi(a.coefficiente * 2)}}`);
+                code += this.toLatex(`x = \\frac{-${this.controllaParentesi((b ? b.coefficiente : 0))} \\pm \\sqrt{${MathSolver.numeroRazionale(delta)}}} {${this.controllaParentesi(a.coefficiente * 2)}}`);
 
                 if (sistema) code += `${this.toLatex(asse)}
                 </td>`;
@@ -728,7 +711,7 @@ function MathSolver(options) {
                     if (sistema) code += `<td class="spazio-sistema"></td>
             
             <td class="graffa-sistema">`;
-                    code += this.toLatex(`x = \\frac{-${this.controllaParentesi((b ? b.coefficiente : 0))} \\pm ${this.numeroRazionale(radice)}} {${this.controllaParentesi(a.coefficiente)}}`);
+                    code += this.toLatex(`x = \\frac{-${this.controllaParentesi((b ? b.coefficiente : 0))} \\pm ${MathSolver.numeroRazionale(radice)}} {${this.controllaParentesi(a.coefficiente)}}`);
                     if (sistema) code += `${this.toLatex(asse)}
             </td>`;
 
@@ -738,7 +721,7 @@ function MathSolver(options) {
                         if (sistema) code += `<td class="spazio-sistema"></td>
             
             <td class="graffa-sistema">`;
-                        code += this.toLatex('x_\{1,2\} = \\pm' + this.numeroRazionale(Math.abs(risultati[0])));
+                        code += this.toLatex('x_\{1,2\} = \\pm' + MathSolver.numeroRazionale(Math.abs(risultati[0])));
 
                         if (sistema) code += `${this.toLatex(asse)}
             </td>`;
@@ -749,7 +732,7 @@ function MathSolver(options) {
                             if (sistema) code += `<td class="spazio-sistema"></td>
                         
                         <td class="graffa-sistema">`;
-                            code += this.toLatex('x_\{' + (i + 1) + '\} = ' + this.numeroRazionale(risultati[i]));
+                            code += this.toLatex('x_\{' + (i + 1) + '\} = ' + MathSolver.numeroRazionale(risultati[i]));
                             if (sistema) code += this.toLatex('y_\{' + (i + 1) + '\} = 0');
                             if (sistema) code += `</td>`;
                             this.aggiungiPunto(risultati[i], 0);
@@ -798,7 +781,7 @@ function MathSolver(options) {
             const termineNoto = funzione.termineNoto();
             code += `<td class="spazio-sistema"></td>
 <td class="graffa-sistema">
-    ${this.toLatex('y = ' + this.numeroRazionale(termineNoto))}
+    ${this.toLatex('y = ' + MathSolver.numeroRazionale(termineNoto))}
     ${this.toLatex(equazioniAssi[asse])}
 </td>`;
             this.aggiungiPunto(0, termineNoto);
@@ -843,6 +826,26 @@ MathSolver.splittaEspressione = function(espressione, caratteri) {
     }
 
     return split;
+}
+
+/**
+ * Metodo che ritorna il numero sotto forma di frazione.
+ * Al momento questa funzione non fa nulla per continuare il corretto funzionamento del programma in quanto ci sono degli errori
+ * 
+ * @method
+ * @name MathSolver#numeroRazionale
+ * @param {number} value Numero da controllare
+ * @returns {*} Numero sotto forma di frazione
+ * @static
+ */
+MathSolver.numeroRazionale = function(value) {
+    return value;
+    /*const frazione = math.fraction(math.number(value));
+    if (frazione.d !== 1) {
+        return `\\frac{${frazione.n.toString()}} {${frazione.d.toString()}}`;
+    } else {
+        return value;
+    }*/
 }
 
 export { MathSolver };

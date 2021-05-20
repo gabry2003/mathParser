@@ -13,6 +13,16 @@ window.Termine = Termine;
  */
 
 /**
+ * Membro di una funzione
+ * 
+ * @typedef {Object} Membro
+ * @property {Array.<Termine>} numeratore - Numeratore del membro
+ * @property {Array.<string>} denominatore - Numeratore del membro (nel caso in cui non ci sia una funzione fratta è 1)
+ * @author Gabriele Princiotta <gabriprinciott@gmail.com>
+ * @version 1.0
+ */
+
+/**
  * Questa classe serve a definire le funzioni interpretate a partire da una stringa.
  * Si trova quindi i membri di ogni equazione e tutti i termini che ne fanno parte.
  * Aggiunge inoltre dei metodi molto utili per lavorare con le funzioni matematiche, come ad esempio l'ordinazione e la ricerca del termine noto.
@@ -35,10 +45,10 @@ function Funzione(options) {
     this.termini = [];
     /**
      * Membri di cui è composta la funzione.
-     * Di solito viene utilizzato nel caso in cui sia un equazione perché nel caso di una funzione si sa già qual è il primo membro.
+     * Ogni membro è composto da numeratore e denominatore, a loro volta composti da termini
      * 
      * @name Funzione#membri
-     * @type {Array.<string>}
+     * @type {Array.<Membro>}
      * @default []
      */
     this.membri = [];
@@ -181,6 +191,53 @@ function Funzione(options) {
         }
         // Ordino la funzione
         this.ordina();
+    }
+
+    /**
+     * Metodo che ritorna il coefficiente angolare di una retta.
+     * Se la funzione non è una retta ritorna null
+     * 
+     * @method
+     * @name Funzione#coefficienteAngolare
+     */
+    this.coefficienteAngolare = function() {
+        if (this.grado() !== 1) { // Se non è una retta
+            return null;
+        }
+
+        // Prendo il coefficiente del termine di grado 1
+        const coefficiente = this.getByExp(1).coefficiente;
+        let radianti = Math.atan(coefficiente);
+        let gradi = radianti * 180 / Math.PI;
+
+        return {
+            numero: coefficiente,
+            gradi: gradi,
+            radianti: radianti,
+            angoloAcuto: coefficiente > 0,
+            angoloRetto: coefficiente == 0,
+            angoloOttuso: coefficiente < 0
+        }
+    }
+
+    /**
+     * Metodo che trova il dominio della funzione
+     * 
+     * @method
+     * @name Funzione#tipologia
+     */
+    this.dominio = function() {
+
+    }
+
+    /**
+     * Metodo che trova la tipologia della funzione
+     * 
+     * @method
+     * @name Funzione#tipologia
+     */
+    this.tipologia = function() {
+
     }
 
     /**
