@@ -237,7 +237,7 @@ function Funzione(options) {
      * @name Funzione#tipologia
      */
     this.tipologia = function() {
-
+        return 'Funzione razionale intera';
     }
 
     /**
