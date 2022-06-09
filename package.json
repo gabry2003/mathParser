@@ -1,11 +1,17 @@
 {
-    "name": "mathsolver",
-    "version": "1.0.0",
+    "name": "@evolvementdev/mathsolver",
+    "version": "0.0.1",
     "description": "Libreria che permette di eseguire diverse operazioni matematiche, come la risoluzione di equazioni e l'intersezione con gli assi",
-    "main": "index.js",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
     "scripts": {
-        "build": "webpack && cp ./dist/mathsolver.min.js ../ITISolver/scripts/mathsolver.min.js",
-        "generate-docs": "./node_modules/.bin/jsdoc ./* -c ./jsdoc.json -d ./docs/ -R README.md --verbose --recurse"
+        "prepublish": "npm run build",
+        "build": "rimraf dist && tsc",
+        "republish": "npm unpublish --force --registry https://evolvement.dev/epm/;npm publish --registry https://evolvement.dev/epm/",
+        "test": "mocha -r ts-node/register test/**/*.spec.ts"
     },
     "repository": {
         "type": "git",
@@ -24,9 +30,21 @@
     },
     "homepage": "https://github.com/gabry2003/mathSolver#readme",
     "devDependencies": {
+        "@types/chai": "^4.3.0",
+        "@types/mocha": "^9.1.0",
+        "awesome-typescript-loader": "^5.2.1",
+        "chai": "^4.3.6",
         "jsdoc": "^3.6.6",
         "minami": "^1.2.3",
+        "mocha": "^9.2.2",
+        "rimraf": "^3.0.2",
+        "terser-webpack-plugin": "^5.3.1",
+        "ts-node": "^10.7.0",
+        "tslib": "^2.3.1",
         "webpack": "^5.37.0",
         "webpack-cli": "^4.7.0"
+    },
+    "dependencies": {
+        "path": "^0.12.7"
     }
 }
