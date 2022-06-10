@@ -34,6 +34,16 @@ window.Termine = Termine;
  * @author Gabriele Princiotta <gabriprinciott@gmail.com>
  * @version 1.0
  */
+
+/**
+ * Primitiva
+ * 
+ * @typedef {Object} Primitiva
+ * @property {Array.<string>} passaggi - Codice HTML con i passaggi per trovare la primitiva
+ * @property {Funzione} func - Funzione primitiva come oggetto
+ * @author Gabriele Princiotta <gabriprinciott@gmail.com>
+ * @version 1.0
+ */
 function Funzione(options) {
     /**
      * Termini di cui è composta la funzione
@@ -52,6 +62,8 @@ function Funzione(options) {
      * @default []
      */
     this.membri = [];
+    this.insiemePositivo = [];
+    this.insiemeNegativo = [];
     /**
      * Parte fissa della funzione o dell'equazione, ovvero quella parte che non viene modificata.
      * Es. y=2x^2+2
@@ -75,7 +87,7 @@ function Funzione(options) {
      */
     this.parteFissa = 'y';
 
-    switch (typeof(options)) { // In base al tipo di dato delle opzioni che sono state passate
+    switch (typeof (options)) { // In base al tipo di dato delle opzioni che sono state passate
         case 'FunzioneOptions': // Se ha passato un oggetto di tipo FunzioneOptions
             // Prendo le opzioni
             this.termini = options.termini;
@@ -98,7 +110,7 @@ function Funzione(options) {
      * @name Funzione#termineNoto
      * @returns {number} Termine noto
      */
-    this.termineNoto = function() {
+    this.termineNoto = function () {
         let termine = 0;
         for (let i = 0; i < this.termini.length; i++) {
             if (this.termini[i].parteLetterale == null) return this.termini[i].coefficiente;
@@ -113,7 +125,7 @@ function Funzione(options) {
      * @name Funzione#grado
      * @return {number} Grado della funzione
      */
-    this.grado = function() {
+    this.grado = function () {
         // Cerco tra tutti i termini quello con il grado maggiore
         return Math.max(...this.termini.map(termine => {
             if (termine.parteLetterale) {
@@ -132,7 +144,7 @@ function Funzione(options) {
      * @param {number} exp Esponente che deve avere il termine nella parte letterale
      * @return {Termine} Termine con quell'esponente
      */
-    this.getByExp = function(exp) {
+    this.getByExp = function (exp) {
         return this.termini.filter(termine => {
             if (termine.parteLetterale) {
                 return termine.parteLetterale.esponente == exp;
@@ -147,7 +159,7 @@ function Funzione(options) {
      * @method
      * @name Funzione#ordina
      */
-    this.ordina = function() {
+    this.ordina = function () {
         // Ordino l'array dei termini in modo decrescente in base all'esponente della parte letterale
         this.termini.sort((a, b) => (b.parteLetterale ? b.parteLetterale.esponente : 0) - (a.parteLetterale ? a.parteLetterale.esponente : 0));
     }
@@ -159,15 +171,15 @@ function Funzione(options) {
      * @method
      * @name Funzione#completa
      */
-    this.completa = function() {
+    this.completa = function () {
         const gradoFunzione = this.grado(); // Prendo il grado
         for (let i = gradoFunzione; i > 0; i--) { // Parto dal grado fino ad esponente 1
             // Se non c'è un termine con questo esponente
             if (this.termini.filter(termine => {
-                    if (termine.parteLetterale) {
-                        return termine.parteLetterale.esponente == i;
-                    }
-                }).length == 0) {
+                if (termine.parteLetterale) {
+                    return termine.parteLetterale.esponente == i;
+                }
+            }).length == 0) {
                 // Lo aggiungo
                 this.termini.push(new Termine({
                     coefficiente: 0,
@@ -200,7 +212,7 @@ function Funzione(options) {
      * @method
      * @name Funzione#coefficienteAngolare
      */
-    this.coefficienteAngolare = function() {
+    this.coefficienteAngolare = function () {
         if (this.grado() !== 1) { // Se non è una retta
             return null;
         }
@@ -226,8 +238,9 @@ function Funzione(options) {
      * @method
      * @name Funzione#tipologia
      */
-    this.dominio = function() {
-
+    this.dominio = function () {
+        // Il dominio di una funzione razionale intera è questo
+        return `(-\\infty,+\\infty)`;
     }
 
     /**
@@ -236,9 +249,72 @@ function Funzione(options) {
      * @method
      * @name Funzione#tipologia
      */
-    this.tipologia = function() {
+    this.tipologia = function () {
         return 'Funzione razionale intera';
     }
+
+    /**
+     * Metodo che calcola la primitiva della funzione e la ritorna, con tutti i passaggi
+     * 
+     * @method
+     * @name Funzione#primitiva
+     * @returns {Primitiva} Funzione primitiva
+     */
+    this.primitiva = function () {
+        let nuovaFunzione = ``;
+        const passaggi = [];
+
+        // Innanzitutto per ogni termine faccio un nuovo integrale
+        // E nel passaggio ci sarà il coefficiente del termine moltiplicato per l'integrale
+        let primoPassaggio = `F(x)=`;
+        let secondoPassaggio = primoPassaggio;
+
+        this.termini.forEach((termine, i) => {
+            const termLetterale = termine.parteLetterale ? termine.parteLetterale.toString() : `x^0`;
+
+            if (i > 0) {
+                primoPassaggio += ` `;
+                nuovaFunzione += ` `;
+
+                if (termine.coefficiente >= 0) {
+                    primoPassaggio += `+`;
+                    nuovaFunzione += `+`;
+                }
+            }
+
+            let termCoefficiente = termine.coefficiente;
+
+            if (termCoefficiente == 1) {
+                termCoefficiente = '';
+            } else if (termCoefficiente == -1) {
+                termCoefficiente = '-';
+            }
+
+            const nuovoIntegrale = termLetterale ? `\\int ${termLetterale.replace('x^0', '')} dx` : ``;
+
+            primoPassaggio += `${termCoefficiente}`;
+            primoPassaggio += nuovoIntegrale;
+
+            const funcDaIntegrare = new Funzione(`y=${termine.coefficiente}${termLetterale}`);
+
+            // Incremento di uno l'esponente
+            funcDaIntegrare.termini[0].parteLetterale.esponente++;
+            funcDaIntegrare.termini[0].coefficiente = termine.coefficiente / funcDaIntegrare.termini[0].parteLetterale.esponente;
+
+            // La nuova funzione avrà quindi come coefficiente il coefficiente attuale fratto il nuovo esponente
+            nuovaFunzione += funcDaIntegrare.toString(false);
+        });
+
+        const func = new Funzione(nuovaFunzione);
+        secondoPassaggio += func.toString();
+
+        passaggi.push(primoPassaggio);
+        passaggi.push(secondoPassaggio);
+
+        
+
+        return { func, passaggi };
+    };
 
     /**
      * Metodo che ritorna la funzione come stringa.
@@ -246,17 +322,18 @@ function Funzione(options) {
      * 
      * @method
      * @name Funzione#toString
+     * @param {boolean} numeroRazionale Se convertire i numeri in frazioni
      * @returns {string} Funzione scritta sotto forma di stringa
      */
-    this.toString = function() {
+    this.toString = function (numeroRazionale = true) {
         let string;
-        this.termini.forEach(termine => {
-            string += termine.toString()
+        this.termini.filter(t => t).forEach(termine => {
+            string += termine.toString(numeroRazionale);
         });
         // Se il primo carattere è un +  lo rimuovo
         if (string[0] == '+') string = string.substring(1);
 
-        return string;
+        return string.replace(/undefined/g, '').replace(/Nan/g, '');
     }
 }
 
@@ -270,7 +347,7 @@ function Funzione(options) {
  * @static
  * @returns {Funzione} Funzione interpretata
  */
-Funzione.interpreta = function(funzione, obj) {
+Funzione.interpreta = function (funzione, obj) {
     const membri = funzione.split('='); // Prendo i membri separando dall'uguale
     const parteFissa = funzione.includes('x=') ? 'x' : 'y'; // Prendo la parte fissa della funzione
 

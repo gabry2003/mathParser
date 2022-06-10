@@ -4,7 +4,8 @@
     "description": "Libreria che permette di eseguire diverse operazioni matematiche, come la risoluzione di equazioni e l'intersezione con gli assi",
     "main": "index.js",
     "scripts": {
-        "build": "webpack && cp ./dist/mathsolver.min.js ../ITISolver/scripts/mathsolver.min.js",
+        "copy": "cp ./dist/mathsolver.min.js ../ITISolver/scripts/mathsolver.min.js && cp ./src/css/mathsolver.css ../ITISolver/css/mathsolver.min.css",
+        "build": "webpack && npm run copy",
         "generate-docs": "./node_modules/.bin/jsdoc ./* -c ./jsdoc.json -d ./docs/ -R README.md --verbose --recurse"
     },
     "repository": {

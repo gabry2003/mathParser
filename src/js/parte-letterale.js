@@ -55,6 +55,10 @@ function ParteLetterale(options) {
      * @returns {string} Parte letterale scritta sotto forma di stringa
      */
     this.toString = function() {
+        if(!this.lettera) {
+            return ``;
+        }
+        
         if (this.esponente !== 0) {
             if (this.esponente !== 1) {
                 return `${this.lettera}^${this.esponente}`;

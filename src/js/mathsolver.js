@@ -132,13 +132,12 @@ function MathSolver(options) {
       // Prendo la lettera successiva per dare il nome al punto
       const nomePunto = this.letteraAttuale
         ? String.fromCharCode(
-            this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1
-          )
+          this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1
+        )
         : "A";
       this.letteraAttuale = nomePunto;
-      let code = `${
-        document.querySelector(options.elementi.listaPunti).innerHTML
-      }<li style="list-style-type: none;">`;
+      let code = `${document.querySelector(options.elementi.listaPunti).innerHTML
+        }<li style="list-style-type: none;">`;
       code += this.toLatex(
         `${nomePunto}(${MathSolver.numeroRazionale(
           x
@@ -234,11 +233,11 @@ function MathSolver(options) {
    * @returns {string} Stringa di codice in Latex
    */
   this.toLatex = function (string, add = true) {
-    let risultato = string;
     if (add) {
-      risultato = `\\[${string}\\]`;
+      return `\\[${string}\\]`;
     }
-    return risultato;
+
+    return string;
   };
 
   /**
@@ -477,18 +476,18 @@ function MathSolver(options) {
       scomposizione += `<div class="col d-flex justify-content-center">
     <div class="card bg-primary text-white mb-4">
         <div class="card-header">${this.toLatex(
-          "\\text{Scomposizione con Ruffini}"
-        )}</div>
+        "\\text{Scomposizione con Ruffini}"
+      )}</div>
         <div class="card-body">
             ${this.toLatex(
-              "\\frac {" +
-                polinomio +
-                "}" +
-                " {x-" +
-                this.controllaParentesi(zeroPolinomio) +
-                "}" +
-                (controllaMeno !== "" ? " = " + controllaMeno : " ")
-            )}
+        "\\frac {" +
+        polinomio +
+        "}" +
+        " {x-" +
+        this.controllaParentesi(zeroPolinomio) +
+        "}" +
+        (controllaMeno !== "" ? " = " + controllaMeno : " ")
+      )}
         
             <br>
             ${griglia}
@@ -626,9 +625,8 @@ function MathSolver(options) {
 
         if (scomposta.equazione.length > 0) {
           // Se l'equazione è stata scomposta
-          ultimaDaConcatenare = `(${
-            scomposta.equazione[scomposta.equazione.length - 1]
-          })`;
+          ultimaDaConcatenare = `(${scomposta.equazione[scomposta.equazione.length - 1]
+            })`;
         }
 
         equazioniScomposte.forEach((eq) => {
@@ -668,8 +666,8 @@ function MathSolver(options) {
       if (sistema) {
         code += `<td class="spazio-sistema"></td>
             <td>${this.toLatex(
-              "\\text{Impossibile scomporre l'equazione}"
-            )}</td>`;
+          "\\text{Impossibile scomporre l'equazione}"
+        )}</td>`;
       } else {
         code += this.toLatex("\\text{Impossibile scomporre l'equazione}");
       }
@@ -736,9 +734,9 @@ function MathSolver(options) {
             code += `<td class="spazio-sistema"></td>
                 <td class="graffa-sistema">`;
           code += this.toLatex(
-            espressione.termini[0].toString() +
-              " = " +
-              MathSolver.numeroRazionale(-termineNoto)
+            espressione.termini[0].toStringWithoutPlus() +
+            " = " +
+            MathSolver.numeroRazionale(-termineNoto)
           );
           if (sistema)
             code += `${this.toLatex(asse)}
@@ -891,7 +889,7 @@ function MathSolver(options) {
             <td class="graffa-sistema">`;
             code += this.toLatex(
               "x_{1,2} = \\pm" +
-                MathSolver.numeroRazionale(Math.abs(risultati[0]))
+              MathSolver.numeroRazionale(Math.abs(risultati[0]))
             );
 
             if (sistema)
@@ -907,9 +905,9 @@ function MathSolver(options) {
                         <td class="graffa-sistema">`;
               code += this.toLatex(
                 "x_{" +
-                  (i + 1) +
-                  "} = " +
-                  MathSolver.numeroRazionale(risultati[i])
+                (i + 1) +
+                "} = " +
+                MathSolver.numeroRazionale(risultati[i])
               );
               if (sistema) code += this.toLatex("y_{" + (i + 1) + "} = 0");
               if (sistema) code += `</td>`;
@@ -988,6 +986,208 @@ function MathSolver(options) {
   };
 
   /**
+ * Metodo che trova gli insiemi positivi e gli insiemi negativi di una funzione
+ * 
+ * @method
+ * @param {Funzione} funzione Funzione di cui calcolare gli insiemi positivi e negativi
+ * @name Funzione#positivitaENegativita
+ */
+  this.positivitaENegativita = function (funzione) {
+    const insiemePositivo = [];
+    const insiemeNegativo = [];
+    let code = this.toLatex(`${funzione.membri[1]} > 0`);
+
+    // Effettuo la scomposizione portando tutte le parti fino al primo grado
+    const partiTemp = this.scomponi(new Funzione(`${funzione.membri[1]}=0`)).equazione;
+    const parti = [];
+
+    partiTemp.forEach(parte => {
+      const func = new Funzione(`${parte}=0`);
+      if (func.grado() == 2) {
+        this.scomponi(func).equazione.forEach(p => {
+          parti.push(p);
+        });
+      } else {
+        parti.push(parte);
+      }
+    });
+
+    const equazioneScomposta = parti.map(e => `(${e})`).join('');
+
+    code += this.toLatex(`${equazioneScomposta} > 0`);
+    code += `<hr>`;
+
+    const disequazioni = [];
+
+    parti.forEach(parte => {
+      code += this.toLatex(`${parte}>0`);
+
+      const func = new Funzione(`${parte}=0`);
+      func.ordina();
+
+      if (func.grado() === 1) {
+        const disequazione = `${func.termini[0].toStringWithoutPlus()}>${func.termineNoto() * -1}`;
+        disequazioni.push(disequazione);
+
+        code += this.toLatex(disequazione);
+
+        code += `<hr>`;
+      }
+    });
+
+    let numeriDisequazioni = disequazioni.map(d => d.split('>')[1]);
+    numeriDisequazioni.sort((a, b) => a - b);
+
+
+    // Costruisco una tabella
+    code += `<div class="table-responsive">
+          <table class="table tabella-disequazione">
+            <thead>
+              <tr class="d-flex">
+              <th scope="col" class="th-lg"></th>
+              ${numeriDisequazioni.map(n => '<th scope="col" class="th-lg th-numero">' + this.toLatex(n) + '</th>').join('')}
+              <th scope="col" class="th-lg"></th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    const cellaRiga = (cella, borderLeft = true, circle = false, mostraSegno = true, borderBottom = true) => {
+      const segno = cella ? '+' : '-';
+
+      code += `               <td`;
+
+      if (!circle && borderBottom) {
+        code += ` style="border-bottom: 2px ${cella ? 'solid' : 'dotted'} #000;"`;
+      }
+
+      if (borderLeft) {
+        code += ` class="td-border-left"`;
+      }
+
+      // ${!cella ? 'background-color: #f2f2f2 !important;' : ''}
+
+      code += `>${circle ? '<span class="circle circle-' + (cella ? 'positive' : 'negative') + '">' : ''}${mostraSegno ? (circle ? segno : this.toLatex(segno)) : ''}${circle ? '</span>' : ''}</td>`;
+    };
+
+    // Righe della tabella, col + e il - per ogni riga
+    const righe = numeriDisequazioni.map((_, i) => numeriDisequazioni.map((__, j) => j >= i));
+
+    righe.forEach((riga) => {
+      code += `             <tr class="d-flex">`;
+
+      cellaRiga(false, false);
+      riga.forEach(a => cellaRiga(a));
+      // cellaRiga(riga[riga.length - 1], false, false, false);
+
+      code += `             </tr>`;
+    });
+
+    code += `<tr class="d-flex"></tr>`;
+
+    // Costruisco l'ultima riga effettuando le operazioni per ogni colonna
+    const ultimaRiga = [Math.pow(-1, numeriDisequazioni.length) > 0];
+
+    // Per ogni colonna
+    for (let i = 0; i < numeriDisequazioni.length; i++) {
+      // Effettuo le operazioni
+      let res = 1;
+
+      // Per ogni cella presente in quella colonna
+      for (let j = 0; j < righe.length; j++) {
+        res = res * (righe[j][i] ? 1 : -1);
+      }
+
+      ultimaRiga.push(res > 0);
+    }
+
+    code += `             <tr class="d-flex">`;
+    ultimaRiga.forEach(a => cellaRiga(a, false, true));
+    // cellaRiga(ultimaRiga[ultimaRiga.length - 1], false, false, false, false);
+    code += `             </tr>`;
+
+    code += `            </tbody>
+    </table></div>`;
+
+    // Dall'ultima riga (ovvero quella dei risultati)
+    // costruisco l'insieme positivo e l'insieme negativo
+
+    // Se sono tutti positivi
+    if (ultimaRiga.filter(r => r).length === ultimaRiga.length) {
+      insiemePositivo = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
+    } else if (ultimaRiga.filter(r => !r).length === ultimaRiga.length) {
+      insiemeNegativo = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
+    } else {
+      let lastIsPositivo;
+      let lastIsNegativo;
+
+      numeriDisequazioni = [Number.NEGATIVE_INFINITY, ...numeriDisequazioni];
+
+      for (let i = 0; i < ultimaRiga.length; i++) {
+        const res = ultimaRiga[i];
+
+        const numero = numeriDisequazioni[i];
+        const numeroSuccessivo = ![null, undefined].includes(numeriDisequazioni[i + 1]) ? numeriDisequazioni[i + 1] : Number.POSITIVE_INFINITY;
+
+        // Se è +
+        if (res) {
+          if (lastIsPositivo) {
+            // Altrimenti
+            // Se il numero precedente era positivo
+            // vado a cambiare il valore finale dell'ultimo intervallo
+            insiemePositivo[insiemePositivo.length - 1][1] = numero;
+          } else {
+            // Altrimenti l'intervallo è dal numero precedente al numero successivo
+            insiemePositivo.push([numero, numeroSuccessivo]);
+          }
+
+          // Mi memorizzo che l'ultimo è positivo
+          lastIsPositivo = true;
+          lastIsNegativo = false;
+        } else {
+          if (lastIsNegativo) {
+            // Altrimenti
+            // Se il numero precedente era positivo
+            // vado a cambiare il valore finale dell'ultimo intervallo
+            insiemeNegativo[insiemeNegativo.length - 1][1] = numero;
+          } else {
+            // Altrimenti l'intervallo è dal numero precedente al numero successivo
+            insiemeNegativo.push([numero, numeroSuccessivo]);
+          }
+
+          // Mi memorizzo che l'ultimo + negativo
+          lastIsPositivo = false;
+          lastIsNegativo = true;
+        }
+      }
+    }
+
+    funzione.insiemePositivo = insiemePositivo;
+    funzione.insiemeNegativo = insiemeNegativo;
+
+    function insiemeToString(insieme) {
+      if (insieme.length == 0) {
+        return `\\emptyset`;
+      }
+
+      return insieme.map(el => {
+        let intervallo = ``;
+
+        if (Array.isArray(el)) {
+          intervallo = el.filter(a => a).map(a => a.toString().replace('-Infinity', '-\\infty').replace('Infinity', '+\\infty')).join(';')
+        }
+
+        return `(${intervallo})`;
+      }).join('\\cup');
+    }
+
+    code += `<br>`;
+    code += this.toLatex(`I.P.=${insiemeToString(insiemePositivo)}`);
+    code += this.toLatex(`I.N.=${insiemeToString(insiemeNegativo)}`);
+
+    return code;
+  }
+
+  /**
    * Metodo che calcola l'area di una funzione in un'intervallo
    *
    * @method
@@ -995,11 +1195,87 @@ function MathSolver(options) {
    * @param {Array<Punto>} punti Punti dell'intervallo
    */
   this.areaFunzione = function (funzione, punti) {
+    if(punti.length < 2) {
+      return this.toLatex(`\\text{Impossibile trovare l'area!}`);
+    }
+
+    punti.sort((a, b) => a.x - b.x);
+
+    const secondoMembroFunzione = funzione.membri[1];
+    const primitiva = funzione.primitiva();
+    const funzionePrimitiva = primitiva.func;
+
+    const ascisse = [...new Set(punti.map(p => p.x))];
+    const primitiveCalcolate = {};
+    let primitiveCalcolateCode = ``;
+
+    ascisse.forEach(ascissa => {
+      console.log('funzionePrimitiva', funzionePrimitiva);
+      const primitivaDaParsare = funzionePrimitiva.toString(false).replace('y=', '');
+
+      console.log('primitivaDaParsare', primitivaDaParsare);
+
+      const primitivaCalcolata = math.parse(primitivaDaParsare).evaluate({
+        x: ascissa,
+      });
+
+      primitiveCalcolate[ascissa] = primitivaCalcolata;
+
+      const ascissaRazionale = MathSolver.numeroRazionale(ascissa);
+      primitiveCalcolateCode += this.toLatex(`F(${ascissaRazionale})=${funzionePrimitiva.toString().replace(/x/g, `(${ascissaRazionale})`)}=${MathSolver.numeroRazionale(primitivaCalcolata)}`);
+    });
+
+    let soluzioniIntegrali = ``;
+    let soluzioneFinale = 0;
+
+    const integrali = punti.filter((_, i) => i !== punti.length - 1).map((p, i) => {
+      const a = p.x;
+      const b = punti[i + 1].x;
+      const aRazionale = MathSolver.numeroRazionale(a);
+      const bRazionale = MathSolver.numeroRazionale(b);
+
+      const Fb = primitiveCalcolate[b];
+      const Fa = primitiveCalcolate[a];
+      const res = Fb - Fa;
+      const abs = Math.abs(res);
+
+      soluzioniIntegrali += this.toLatex(`\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) = ${res < 0 ? '\\lvert' : ''}${MathSolver.numeroRazionale(Fb)} - ${MathSolver.numeroRazionale(Fa)}${res < 0 ? '\\rvert' : ''} = ${MathSolver.numeroRazionale(abs)}`) + "\n";
+
+      const code = `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx`;
+      soluzioneFinale += abs;
+
+      return {
+        code,
+        res: abs
+      };
+    });
+
+    const ultimoPassaggio = integrali.map(i => {
+      const res = MathSolver.numeroRazionale(i.res);
+
+      if(res[0] === '-') {
+        return `(${res})`;
+      }
+
+      return res;
+    }).join(' + ');
+
     let code = ``;
 
-    code += this.toLatex("\\int_{a}^{b}f(x)dx=0");
+    // Scrivo la funzione
+    code += this.toLatex(`f(x)=${secondoMembroFunzione}`);
+    // Poi scrivo la primitiva con tutti i passaggi per trovarla
+    code += primitiva.passaggi.map(p => this.toLatex(p, true)).join('\n');
 
-    console.log("punti", punti);
+    // Adesso calcolo la primitiva per ogni ascissa
+    code += primitiveCalcolateCode;
+    code += soluzioniIntegrali;
+
+    code += `<hr>`;
+    code += this.toLatex(`Area = \\int_{${MathSolver.numeroRazionale(punti[0].x)}}^{${MathSolver.numeroRazionale(punti[punti.length - 1].x)}} f(x) dx`);
+    code += this.toLatex(`Area = ` + integrali.map(i => i.code).join(' + '));
+    code += this.toLatex(`Area = ` + ultimoPassaggio);
+    code += this.toLatex(`\\textbf{Area = } \\mathbf{${MathSolver.numeroRazionale(soluzioneFinale)}}`)
 
     return code;
   };
@@ -1049,13 +1325,18 @@ MathSolver.splittaEspressione = function (espressione, caratteri) {
  * @static
  */
 MathSolver.numeroRazionale = function (value) {
-  return value;
-  /*const frazione = math.fraction(math.number(value));
-    if (frazione.d !== 1) {
-        return `\\frac{${frazione.n.toString()}} {${frazione.d.toString()}}`;
-    } else {
-        return value;
-    }*/
+  if(value == undefined) {
+    return '1';
+  }
+
+  // return value;
+  const frazione = math.fraction(math.number(value));
+  if (frazione.d !== 1) {
+    const simbolo = value < 0 ? '-' : '';
+    return `${simbolo}\\frac{${frazione.n.toString()}} {${frazione.d.toString()}}`;
+  } else {
+    return value;
+  }
 };
 
 export { MathSolver };

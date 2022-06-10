@@ -54,20 +54,54 @@ function Termine(options) {
      * Molto utile nel caso in cui il termine sia stata modificato da uno dei metodi per poterlo stampare a schermo con le modifiche
      * 
      * @method
+     * @param {boolean} numeroRazionale Se convertire i numeri in frazioni
      * @returns {string} Termine scritto sotto forma di stringa
      */
-    this.toString = function() {
+    this.toString = function(numeroRazionale = true) {
         let string;
 
         if (this.coefficiente == 1) {
-            string = `+${this.parteLetterale.toString()}`;
+            if(this.parteLetterale) {
+                string = `+${this.parteLetterale.toString()}`;
+            }else {
+                string = `+1`;
+            }
         } else if (this.coefficiente == -1) {
-            string = `-${this.parteLetterale.toString()}`;
+            if(this.parteLetterale) {
+                string = `-${this.parteLetterale.toString()}`;
+            }else {
+                string = `-1`;
+            }
         } else {
-            string = MathSolver.numeroRazionale(this.coefficiente) + this.parteLetterale.toString()
+            if(numeroRazionale) {
+                string = MathSolver.numeroRazionale(this.coefficiente);
+            }else {
+                string = `${this.coefficiente}`;
+            }
+            
+            if(this.parteLetterale) {
+                string += this.parteLetterale.toString();
+            }
         }
 
         return string;
+    }
+
+    /**
+     * Metodo che ritorna il termine come stringa.
+     * Elimina il + se è il primo carattere
+     * 
+     * @method
+     * @returns {string} Termine, con tolto il + se è il primo carattere
+     */
+    this.toStringWithoutPlus = function() {
+        let stringa = this.toString();
+
+        if (stringa[0] == '+') {
+          return stringa.substring(1);
+        }
+
+        return stringa;
     }
 }
 
