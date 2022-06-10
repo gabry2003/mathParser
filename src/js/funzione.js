@@ -306,15 +306,31 @@ function Funzione(options) {
         });
 
         const func = new Funzione(nuovaFunzione);
-        secondoPassaggio += func.toString();
+        secondoPassaggio += func.toString(true);
 
         passaggi.push(primoPassaggio);
         passaggi.push(secondoPassaggio);
 
-        
-
         return { func, passaggi };
     };
+
+    /**
+     * Metodo che restituisce la derivata della funzione
+     * 
+     * @method
+     * @param {number} grado Grado di cui calcolare la derivata
+     * @returns 
+     */
+    this.derivata = function(grado = 1) {
+        let func = this.toString();
+
+        for(let i = 0; i < grado;i++) {
+            func = math.derivative(func, 'x').toString().replace(/\*/g, '').replace(/\s/g, '');
+            console.log('func', func);
+        }
+
+        return new Funzione(`y=${func}`);
+    }
 
     /**
      * Metodo che ritorna la funzione come stringa.
