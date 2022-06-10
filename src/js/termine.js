@@ -57,7 +57,7 @@ function Termine(options) {
      * @param {boolean} numeroRazionale Se convertire i numeri in frazioni
      * @returns {string} Termine scritto sotto forma di stringa
      */
-    this.toString = function(numeroRazionale = true) {
+    this.toString = function(numeroRazionale = false) {
         let string;
 
         if (this.coefficiente == 1) {
@@ -77,6 +77,10 @@ function Termine(options) {
                 string = MathSolver.numeroRazionale(this.coefficiente);
             }else {
                 string = `${this.coefficiente}`;
+            }
+
+            if(this.coefficiente > 0) {
+                string = `+${string}`;
             }
             
             if(this.parteLetterale) {

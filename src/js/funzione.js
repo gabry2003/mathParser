@@ -325,7 +325,7 @@ function Funzione(options) {
      * @param {boolean} numeroRazionale Se convertire i numeri in frazioni
      * @returns {string} Funzione scritta sotto forma di stringa
      */
-    this.toString = function (numeroRazionale = true) {
+    this.toString = function (numeroRazionale = false) {
         let string;
         this.termini.filter(t => t).forEach(termine => {
             string += termine.toString(numeroRazionale);
