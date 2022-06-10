@@ -1266,11 +1266,7 @@ function MathSolver(options) {
         } else if (d === "NO_VALUES") {
           value = false;
         } else {
-          const split = d.split(">");
-          const primo = split[0];
-          const secondo = split[1];
-
-          value = primo > secondo;
+          value = eval(d);
         }
 
         righe.push(numeriDisequazioni.map((_) => value));
@@ -1314,13 +1310,14 @@ function MathSolver(options) {
     // costruisco l'insieme positivo e l'insieme negativo
 
     // Se sono tutti positivi
-    if (ultimaRiga.filter((r) => r).length === ultimaRiga.length) {
-      insiemePositivo = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
-      insiemiInOrdine = [{ positive: insiemePositivo }];
-    } else if (ultimaRiga.filter((r) => !r).length === ultimaRiga.length) {
-      insiemeNegativo = [Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY];
-      insiemiInOrdine = [{ negative: insiemeNegativo }];
-    } else {
+
+    // if (ultimaRiga.filter((r) => r).length === ultimaRiga.length) {
+    //   insiemePositivo.push([Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]);
+    //   insiemiInOrdine = [{ positive: insiemePositivo }];
+    // } else if (ultimaRiga.filter((r) => !r).length === ultimaRiga.length) {
+    //   insiemeNegativo.push([Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]);
+    //   insiemiInOrdine = [{ negative: insiemeNegativo }];
+    // } else {
       let lastIsPositivo;
       let lastIsNegativo;
 
@@ -1369,7 +1366,11 @@ function MathSolver(options) {
           lastIsNegativo = true;
         }
       }
-    }
+    // }
+
+    insiemePositivo = insiemePositivo.filter(el => el.length > 0);
+    insiemeNegativo = insiemeNegativo.filter(el => el.length > 0);
+    insiemiInOrdine = insiemiInOrdine.filter(el => (el.positive || el.negative).length > 0);
 
     return { code, insiemePositivo, insiemeNegativo, insiemiInOrdine };
   };
@@ -1391,8 +1392,14 @@ function MathSolver(options) {
     let code = this.toLatex(`${funzione.membri[1]} > 0`);
 
     // Effettuo la scomposizione portando tutte le parti massimo fino al primo grado
-    const scomp = this.scomponi(new Funzione(`${funzione.membri[1]}=0`));
-    const partiTemp = scomp.equazione;
+
+    let partiTemp = [];
+
+    if (funzione.grado() > 1) {
+      const scomp = this.scomponi(new Funzione(`${funzione.membri[1]}=0`));
+      partiTemp = scomp.equazione;
+    }
+
     let parti = [];
 
     partiTemp.forEach((parte) => {
@@ -1434,20 +1441,28 @@ function MathSolver(options) {
         code += this.toLatex(`${parte}>0`);
       }
 
-      const func = new Funzione(`${parte}=0`);
+      const func = new Funzione(`y=${parte}`);
       func.ordina();
 
       const grado = func.grado();
 
-      if (grado === 1) {
-        // Se la funzione è di primo grado
-        // Risolvo la disequazione solamente spostando dal primo al secondo membro
-        const disequazione = `${func.termini[0].toStringWithoutPlus()}>${
-          func.termineNoto() * -1
-        }`;
+      if (grado === 0) {
+        // Se la funzione non ha la x
+        const disequazione = `${parte}>0`;
         disequazioni.push(disequazione);
 
-        code += this.toLatex(disequazione);
+        code += this.toLatex(`${MathSolver.numeroRazionale(parte)}>0`);
+
+        code += `<hr>`;
+      }else if (grado === 1) {
+        // Se la funzione è di primo grado
+        // Risolvo la disequazione solamente spostando dal primo al secondo membro
+        const secondoMembro =
+          (func.termineNoto() * -1) / func.termini[0].coefficiente;
+        const disequazione = `x>${secondoMembro}`;
+        disequazioni.push(disequazione);
+
+        code += this.toLatex(`x>${MathSolver.numeroRazionale(secondoMembro)}`);
 
         code += `<hr>`;
       } else if (grado === 2) {
@@ -1599,7 +1614,7 @@ function MathSolver(options) {
           insiemiInOrdine[i + 1].negative
       )
       .map((el) => el.positive[1])
-      .filter(el => el);
+      .filter((el) => el);
     ascissePuntiMassimi = [...new Set(ascissePuntiMassimi)];
 
     // E quelle dei punti minimi
@@ -1612,11 +1627,11 @@ function MathSolver(options) {
           insiemiInOrdine[i + 1].positive
       )
       .map((el) => el.negative[1])
-      .filter(el => el);
+      .filter((el) => el);
     ascissePuntiMinimi = [...new Set(ascissePuntiMinimi)];
 
-    console.log('ascissePuntiMinimi', ascissePuntiMinimi);
-    console.log('ascissePuntiMassimi', ascissePuntiMassimi);
+    console.log("ascissePuntiMinimi", ascissePuntiMinimi);
+    console.log("ascissePuntiMassimi", ascissePuntiMassimi);
 
     if (insiemePositivo.length > 0) {
       code += this.toLatex(
@@ -1671,6 +1686,47 @@ function MathSolver(options) {
     return code;
   };
 
+  /**
+   * Metodo che trova la concavita di una funzione
+   *
+   * @method
+   * @param {Funzione} funzione Funzione di cui trovare la concavita'
+   * @name Funzione#concavitaFunzione
+   */
+  this.concavitaFunzione = function (funzione) {
+    const derivata = funzione.derivata(2);
+
+    let code = ``;
+
+    code += this.toLatex(`f^{\\prime\\prime}(x)=${derivata.membri[1]}`);
+
+    let {
+      insiemePositivo,
+      insiemeNegativo,
+      code: codeFunc,
+    } = this.funzioneMaggioreDiZero(derivata, "⬈", "⬊");
+
+    code += codeFunc;
+    code += `<br>`;
+
+    if (insiemePositivo.length > 0) {
+      code += this.toLatex(
+        `\\text{La funzione ha la concavità rivolta verso l'alto (è convessa) in } ${this.insiemeToString(
+          insiemePositivo
+        )}`
+      );
+    }
+
+    if (insiemeNegativo.length > 0) {
+      code += this.toLatex(
+        `\\text{La funzione ha la concavità rivolta verso il basso (è concava) in } ${this.insiemeToString(
+          insiemeNegativo
+        )}`
+      );
+    }
+
+    return code;
+  };
   /**
    * Metodo che calcola l'area di una funzione in un'intervallo
    *
