@@ -326,10 +326,22 @@ function Funzione(options) {
 
         for(let i = 0; i < grado;i++) {
             func = math.derivative(func, 'x').toString().replace(/\*/g, '').replace(/\s/g, '');
-            console.log('func', func);
         }
 
         return new Funzione(`y=${func}`);
+    }
+
+    /**
+     * Metodo che controlla se la funzione e' una parabola
+     * 
+     * @method
+     * @returns {boolean} Se la funzione e' o no una prabola
+     */
+    this.isParabola = function() {
+        // Una funzione e' una parabola se e' presente la x di secondo grado
+        const term = this.getByExp(2);
+
+        return term && term.coefficiente != 0;
     }
 
     /**

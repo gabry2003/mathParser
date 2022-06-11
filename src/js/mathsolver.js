@@ -109,6 +109,38 @@ function MathSolver(options) {
   };
 
   /**
+   * Metodo che modifica un punto nello schermo
+   *
+   * @method
+   * @name MathSolver#modificaPunto
+   * @param {string} x Funzioni da disegnare a schermo
+   * @param {string} y Eventuali punti da aggiungere al grafico
+   * @param {string} [nome] Nome del punto
+   * @returns
+   */
+  this.modificaPunto = function (x, y, nome) {
+    const index = this.puntiAttivi.findIndex((p) => p.x === x && p.y === y);
+
+    if (index == null && index == undefined) {
+      // Se non trovo il punto
+      // Mi fermo
+      return;
+    }
+
+    nome = nome || this.puntiAttivi[index].nome;
+
+    const punto = {
+      x,
+      y,
+      nome,
+    };
+
+    this.puntiAttivi[index] = punto;
+
+    return punto;
+  };
+
+  /**
    * Metodo che aggiunge un punto nello schermo
    *
    * @method
@@ -118,6 +150,10 @@ function MathSolver(options) {
    * @param {string} [nome] Nome del punto
    */
   this.aggiungiPunto = function (x, y, nome) {
+    if (x === 0 && y === 0) {
+      nome = "O";
+    }
+
     const found = (this.puntiAttivi || []).find(
       (punto) => punto.x == x && punto.y == y
     );
@@ -128,11 +164,30 @@ function MathSolver(options) {
     }
 
     // Prendo la lettera successiva per dare il nome al punto
-    const nomePunto = this.letteraAttuale
-      ? String.fromCharCode(
-          this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1
-        )
-      : "A";
+    // Ovviamente se non e' stato gia' deciso il nome
+    let nomePunto =
+      nome ||
+      (this.letteraAttuale
+        ? String.fromCharCode(
+            this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1
+          )
+        : "A");
+
+    if (nome) {
+      // Se il punto ha un nome specifico lo metto
+      nomePunto = nome;
+    } else {
+      // Altrimenti lo prendo in ordine alfabetico
+      do {
+        nomePunto = this.letteraAttuale
+          ? String.fromCharCode(
+              this.letteraAttuale.charCodeAt(this.letteraAttuale.length - 1) + 1
+            )
+          : "A";
+        this.letteraAttuale = nomePunto; // Mi memorizzo in che lettera siamo arrivati
+      } while (this.puntiAttivi.find((p) => p.nome === nomePunto));
+      // Continuo ad andare avanti se vedo che esiste gia' un punto con questo nome
+    }
 
     // Se questo punto non esiste già
     // Lo aggiungo
@@ -143,7 +198,6 @@ function MathSolver(options) {
     };
     this.puntiAttivi.push(nuovoPunto);
 
-    this.letteraAttuale = nomePunto;
     let code = `${
       document.querySelector(options.elementi.listaPunti).innerHTML
     }<li style="list-style-type: none;">`;
@@ -224,7 +278,6 @@ function MathSolver(options) {
       }
       url = url.toString().replace("https://prova.it/", "");
 
-      console.log("url", url);
       options.grafico.elemento.src = url; // Carico il grafico nella pagina
     } catch (err) {
       console.error(err);
@@ -506,14 +559,6 @@ function MathSolver(options) {
         </div>
     </div>
 </div>`;
-    } else {
-      console.log(
-        `Non trovo lo zero del polinomio!`,
-        `polinomio`,
-        polinomio,
-        `probabiliZero`,
-        probabiliZero
-      );
     }
 
     return {
@@ -530,6 +575,10 @@ function MathSolver(options) {
    * @param {Funzione} funzione Funzione da scomporre
    */
   this.scomponi = function (funzione) {
+    // x^3-x
+    // Innanzitutto provo a scomporre raccogliendo la x
+    // Se non riesco scompongo con Ruffini
+
     return this.scomponiConRuffini(funzione);
   };
 
@@ -921,7 +970,7 @@ function MathSolver(options) {
               code += `${this.toLatex(asse)}
           </td>`;
             if (aggiungiPunto) {
-              this.aggiungiPunto(risultati[i], 0);
+              this.aggiungiPunto(risultati[0], 0);
             }
           } else {
             // Stampo i risultati
@@ -1028,7 +1077,9 @@ function MathSolver(options) {
   this.funzionePariODispari = function (funzione) {
     let code = ``;
 
-    const funzioneString = funzione.membri[1];
+    let funzioneString = funzione.membri[1];
+    // Se il primo carattere è un +  lo rimuovo
+    if (funzioneString[0] == "+") funzioneString = funzioneString.substring(1);
 
     // -f(x)
     let menoFDiX = new Funzione(`y=${funzioneString}`);
@@ -1037,6 +1088,8 @@ function MathSolver(options) {
       termine.coefficiente = termine.coefficiente * -1;
     });
     menoFDiX = menoFDiX.toString(false).replace("y=", "");
+    // Se il primo carattere è un +  lo rimuovo
+    if (menoFDiX[0] == "+") menoFDiX = menoFDiX.substring(1);
 
     // f(-x)
     let fDiMenoX = new Funzione(`y=${funzioneString}`);
@@ -1050,6 +1103,8 @@ function MathSolver(options) {
         termine.coefficiente = termine.coefficiente * -1;
       });
     fDiMenoX = fDiMenoX.toString(false).replace("y=", "");
+    // Se il primo carattere è un +  lo rimuovo
+    if (fDiMenoX[0] == "+") fDiMenoX = fDiMenoX.substring(1);
 
     let menoFDiXCalc = this.toLatex(`-f(x) = -(${funzioneString})`);
     menoFDiXCalc += this.toLatex(`-f(x) = ${menoFDiX}`);
@@ -1318,59 +1373,61 @@ function MathSolver(options) {
     //   insiemeNegativo.push([Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY]);
     //   insiemiInOrdine = [{ negative: insiemeNegativo }];
     // } else {
-      let lastIsPositivo;
-      let lastIsNegativo;
+    let lastIsPositivo;
+    let lastIsNegativo;
 
-      for (let i = 0; i < ultimaRiga.length; i++) {
-        const res = ultimaRiga[i];
+    for (let i = 0; i < ultimaRiga.length; i++) {
+      const res = ultimaRiga[i];
 
-        const numero = numeriDisequazioni[i];
-        const numeroSuccessivo = ![null, undefined].includes(
-          numeriDisequazioni[i + 1]
-        )
-          ? numeriDisequazioni[i + 1]
-          : Number.POSITIVE_INFINITY;
+      const numero = numeriDisequazioni[i];
+      const numeroSuccessivo = ![null, undefined].includes(
+        numeriDisequazioni[i + 1]
+      )
+        ? numeriDisequazioni[i + 1]
+        : Number.POSITIVE_INFINITY;
 
-        // Se è +
-        if (res) {
-          if (lastIsPositivo) {
-            // Altrimenti
-            // Se il numero precedente era positivo
-            // vado a cambiare il valore finale dell'ultimo intervallo
-            insiemePositivo[insiemePositivo.length - 1][1] = numero;
-            insiemiInOrdine[insiemiInOrdine.length - 1].positive[1] = numero;
-          } else {
-            // Altrimenti l'intervallo è dal numero precedente al numero successivo
-            insiemePositivo.push([numero, numeroSuccessivo]);
-            insiemiInOrdine.push({ positive: [numero, numeroSuccessivo] });
-          }
-
-          // Mi memorizzo che l'ultimo è positivo
-          lastIsPositivo = true;
-          lastIsNegativo = false;
+      // Se è +
+      if (res) {
+        if (lastIsPositivo) {
+          // Altrimenti
+          // Se il numero precedente era positivo
+          // vado a cambiare il valore finale dell'ultimo intervallo
+          insiemePositivo[insiemePositivo.length - 1][1] = numero;
+          insiemiInOrdine[insiemiInOrdine.length - 1].positive[1] = numero;
         } else {
-          if (lastIsNegativo) {
-            // Altrimenti
-            // Se il numero precedente era positivo
-            // vado a cambiare il valore finale dell'ultimo intervallo
-            insiemeNegativo[insiemeNegativo.length - 1][1] = numero;
-            insiemiInOrdine[insiemiInOrdine.length - 1].negative[1] = numero;
-          } else {
-            // Altrimenti l'intervallo è dal numero precedente al numero successivo
-            insiemeNegativo.push([numero, numeroSuccessivo]);
-            insiemiInOrdine.push({ negative: [numero, numeroSuccessivo] });
-          }
-
-          // Mi memorizzo che l'ultimo + negativo
-          lastIsPositivo = false;
-          lastIsNegativo = true;
+          // Altrimenti l'intervallo è dal numero precedente al numero successivo
+          insiemePositivo.push([numero, numeroSuccessivo]);
+          insiemiInOrdine.push({ positive: [numero, numeroSuccessivo] });
         }
+
+        // Mi memorizzo che l'ultimo è positivo
+        lastIsPositivo = true;
+        lastIsNegativo = false;
+      } else {
+        if (lastIsNegativo) {
+          // Altrimenti
+          // Se il numero precedente era positivo
+          // vado a cambiare il valore finale dell'ultimo intervallo
+          insiemeNegativo[insiemeNegativo.length - 1][1] = numero;
+          insiemiInOrdine[insiemiInOrdine.length - 1].negative[1] = numero;
+        } else {
+          // Altrimenti l'intervallo è dal numero precedente al numero successivo
+          insiemeNegativo.push([numero, numeroSuccessivo]);
+          insiemiInOrdine.push({ negative: [numero, numeroSuccessivo] });
+        }
+
+        // Mi memorizzo che l'ultimo + negativo
+        lastIsPositivo = false;
+        lastIsNegativo = true;
       }
+    }
     // }
 
-    insiemePositivo = insiemePositivo.filter(el => el.length > 0);
-    insiemeNegativo = insiemeNegativo.filter(el => el.length > 0);
-    insiemiInOrdine = insiemiInOrdine.filter(el => (el.positive || el.negative).length > 0);
+    insiemePositivo = insiemePositivo.filter((el) => el.length > 0);
+    insiemeNegativo = insiemeNegativo.filter((el) => el.length > 0);
+    insiemiInOrdine = insiemiInOrdine.filter(
+      (el) => (el.positive || el.negative).length > 0
+    );
 
     return { code, insiemePositivo, insiemeNegativo, insiemiInOrdine };
   };
@@ -1454,7 +1511,7 @@ function MathSolver(options) {
         code += this.toLatex(`${MathSolver.numeroRazionale(parte)}>0`);
 
         code += `<hr>`;
-      }else if (grado === 1) {
+      } else if (grado === 1) {
         // Se la funzione è di primo grado
         // Risolvo la disequazione solamente spostando dal primo al secondo membro
         const secondoMembro =
@@ -1516,7 +1573,7 @@ function MathSolver(options) {
           } else if (delta < 0) {
             disequazioni.push("ALL_VALUES");
 
-            code += this.toLatex(`\\forall x \\in \\bbR`);
+            code += this.toLatex(`\\forall x \\in \\mathbb{R}`);
           }
         } else {
           if (delta > 0) {
@@ -1529,7 +1586,7 @@ function MathSolver(options) {
           } else if (delta <= 0) {
             disequazioni.push("NO_VALUES");
 
-            code += this.toLatex(`\\nexists x \\in \\bbR`);
+            code += this.toLatex(`\\nexists x \\in \\mathbb{R}`);
           }
         }
 
@@ -1629,9 +1686,6 @@ function MathSolver(options) {
       .map((el) => el.negative[1])
       .filter((el) => el);
     ascissePuntiMinimi = [...new Set(ascissePuntiMinimi)];
-
-    console.log("ascissePuntiMinimi", ascissePuntiMinimi);
-    console.log("ascissePuntiMassimi", ascissePuntiMassimi);
 
     if (insiemePositivo.length > 0) {
       code += this.toLatex(
@@ -1784,37 +1838,38 @@ function MathSolver(options) {
         const Fb = primitiveCalcolate[b];
         const Fa = primitiveCalcolate[a];
         const res = Fb - Fa;
-        const abs = Math.abs(res);
 
         soluzioniIntegrali +=
           this.toLatex(
-            `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) = ${
-              res < 0 ? "\\lvert" : ""
-            }${MathSolver.numeroRazionale(Fb)} - ${MathSolver.numeroRazionale(
+            `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) =${MathSolver.numeroRazionale(Fb)} - ${MathSolver.numeroRazionale(
               Fa
-            )}${res < 0 ? "\\rvert" : ""} = ${MathSolver.numeroRazionale(abs)}`
+            )} = ${MathSolver.numeroRazionale(res)}`
           ) + "\n";
 
         const code = `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx`;
-        soluzioneFinale += abs;
+        soluzioneFinale += Math.abs(res);
 
         return {
           code,
-          res: abs,
+          res,
         };
       });
 
-    const ultimoPassaggio = integrali
-      .map((i) => {
-        const res = MathSolver.numeroRazionale(i.res);
+      let ultimoPassaggio = ``;
+      let integraliToString = ``;
 
-        if (res[0] === "-") {
-          return `(${res})`;
+      integrali
+      .forEach((integrale, index) => {
+        ultimoPassaggio += MathSolver.numeroRazionale(Math.abs(integrale.res));
+        integraliToString += integrale.code;
+
+        if(index < (integrali.length - 1)) {
+          const separator = integrali[index + 1] && integrali[index + 1].res < 0 ? ' - ' : ' + ';
+          
+          ultimoPassaggio += ' + ';
+          integraliToString += separator;
         }
-
-        return res;
       })
-      .join(" + ");
 
     let code = ``;
 
@@ -1833,8 +1888,14 @@ function MathSolver(options) {
         punti[0].x
       )}}^{${MathSolver.numeroRazionale(punti[punti.length - 1].x)}} f(x) dx`
     );
-    code += this.toLatex(`Area = ` + integrali.map((i) => i.code).join(" + "));
-    code += this.toLatex(`Area = ` + ultimoPassaggio);
+
+    if (integrali.length > 1) {
+      code += this.toLatex(
+        `Area = ${integraliToString}`
+      );
+    }
+
+    code += this.toLatex(`Area = ${ultimoPassaggio}`);
     code += this.toLatex(
       `\\textbf{Area = } \\mathbf{${MathSolver.numeroRazionale(
         soluzioneFinale
@@ -1842,6 +1903,64 @@ function MathSolver(options) {
     );
 
     return code;
+  };
+
+  /**
+   * Metodo che aggiunge le funzioni e i punti specifici per una parabola
+   *
+   * @method
+   * @param {Funzione} funzione Funzione di cui fare le aggiunte specifiche
+   *
+   * @returns {Array.<string>} Funzioni da aggiungere al grafico
+   */
+  this.aggiunteSpecificheParabola = function (funzione) {
+    // Equazione parabola: y=ax^2+bx+c
+    // Per la parabola bisogna calcolare il fuoco, il vertice, la direttrice e l'asse di simmetria
+    let a = funzione.getByExp(2);
+    a = a ? a.coefficiente : 0;
+
+    let b = funzione.getByExp(1);
+    b = b ? b.coefficiente : 0;
+
+    const c = funzione.termineNoto();
+
+    const delta = Math.pow(b, 2) - 4 * a * c;
+
+    // I due punti hanno la stessa ascissa
+    const x = (b * -1) / (2 * a);
+
+    const vertice = {
+      x,
+      y: (delta * -1) / (4 * a),
+    };
+
+    const fuoco = {
+      x,
+      y: (1 - delta) / (4 * a),
+    };
+
+    this.aggiungiPunto(vertice.x, vertice.y, "V");
+    this.aggiungiPunto(fuoco.x, fuoco.y, "F");
+
+    // Per il momento non lo torno perche' se li visualizzo tutti e due il grafico da problemi
+    const direttrice = `y=${((1 + delta) / (4 * a)) * -1}`;
+    // const asseDiSimmetria = `x=${x}`;
+
+    return [direttrice];
+  };
+
+  /**
+   * Metodo che aggiunge le funzioni e i punti specifici, ad esempio la direttrice della parabola e il vertice
+   *
+   * @method
+   * @param {Funzione} funzione Funzione di cui fare le aggiunte specifiche
+   */
+  this.aggiunteSpecifiche = function (funzione) {
+    if (funzione.isParabola()) {
+      return this.aggiunteSpecificheParabola(funzione);
+    }
+
+    return [];
   };
 }
 
