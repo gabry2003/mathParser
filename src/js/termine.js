@@ -1,5 +1,7 @@
 import { ParteLetterale } from './parte-letterale';
+import { stringWithoutPlus } from './utils';
 window.ParteLetterale = ParteLetterale;
+window.stringWithoutPlus = stringWithoutPlus;
 
 /**
  * Opzioni per l'inizializzazione di un oggetto di tipo Termine
@@ -46,7 +48,7 @@ function Termine(options) {
         default: // Se ha passato un oggetto di tipo TermineOptions
             // Prendo le opzioni
             this.coefficiente = options.coefficiente;
-            this.parteLetterale = options.parteLetterale;
+            this.parteLetterale = new ParteLetterale(options.parteLetterale);
     }
 
     /**
@@ -59,16 +61,17 @@ function Termine(options) {
      */
     this.toString = function(numeroRazionale = false) {
         let string;
+        const parteLetteraleString = this.parteLetterale && this.parteLetterale.lettera ? this.parteLetterale.toString() : '';
 
-        if (this.coefficiente == 1) {
-            if(this.parteLetterale) {
-                string = `+${this.parteLetterale.toString()}`;
+        if (this.coefficiente === 1) {
+            if(parteLetteraleString) {
+                string = `+${parteLetteraleString}`;
             }else {
                 string = `+1`;
             }
         } else if (this.coefficiente == -1) {
-            if(this.parteLetterale) {
-                string = `-${this.parteLetterale.toString()}`;
+            if(parteLetteraleString) {
+                string = `-${parteLetteraleString}`;
             }else {
                 string = `-1`;
             }
@@ -79,12 +82,12 @@ function Termine(options) {
                 string = `${this.coefficiente}`;
             }
 
-            if(this.coefficiente > 0) {
+            if(this.coefficiente >= 0) {
                 string = `+${string}`;
             }
             
-            if(this.parteLetterale) {
-                string += this.parteLetterale.toString();
+            if(parteLetteraleString) {
+                string += parteLetteraleString;
             }
         }
 
@@ -99,13 +102,7 @@ function Termine(options) {
      * @returns {string} Termine, con tolto il + se è il primo carattere
      */
     this.toStringWithoutPlus = function() {
-        let stringa = this.toString();
-
-        if (stringa[0] == '+') {
-          return stringa.substring(1);
-        }
-
-        return stringa;
+        return stringWithoutPlus(this.toString())
     }
 }
 
@@ -120,6 +117,7 @@ function Termine(options) {
  * @returns {Termine} Termine interpretato
  */
 Termine.interpreta = function(termine, obj) {
+    termine = termine.replace('=0', '');
     let coefficiente = '';
     let parteLetterale = '';
     let prendiCoefficiente = true;
@@ -136,6 +134,8 @@ Termine.interpreta = function(termine, obj) {
             parteLetterale += termine[i];
         }
     }
+
+    // console.log(`Termine.intepretra(${termine})`, `coefficiente: ${coefficiente}`, `parteLetterale: ${parteLetterale}`);
 
     switch (coefficiente) { // In base al valore del coefficiente
         case '+':
@@ -155,6 +155,10 @@ Termine.interpreta = function(termine, obj) {
     if (parteLetterale == '') parteLetterale = null;
     parteLetterale = ParteLetterale.interpreta(parteLetterale);
 
+    if(parteLetterale && parteLetterale.lettera === null) {
+        parteLetterale = null;
+    }
+
     if (obj) { // Se devo modificare un oggetto
         obj.coefficiente = coefficiente;
         obj.parteLetterale = parteLetterale;
@@ -162,9 +166,9 @@ Termine.interpreta = function(termine, obj) {
         return obj;
     } else { // Altrimenti
         return new Termine({
-            coefficiente: coefficiente,
-            parteLetterale: parteLetterale
-        });;
+            coefficiente,
+            parteLetterale
+        });
     }
 }
 

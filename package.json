@@ -5,7 +5,8 @@
     "main": "index.js",
     "scripts": {
         "copy": "cp ./dist/mathsolver.min.js ../ITISolver/scripts/mathsolver.min.js && cp ./src/css/mathsolver.css ../ITISolver/css/mathsolver.min.css",
-        "build": "webpack && npm run copy",
+        "build": "webpack --env mode=production && npm run copy",
+        "build:dev": "webpack --env mode=development && npm run copy",
         "generate-docs": "./node_modules/.bin/jsdoc ./* -c ./jsdoc.json -d ./docs/ -R README.md --verbose --recurse"
     },
     "repository": {

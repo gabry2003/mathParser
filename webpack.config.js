@@ -1,8 +1,5 @@
-// production or development
-const mode = 'development';
-
-module.exports = {
-    mode: mode,
+module.exports = (env) => ({
+    mode: env.mode,
     entry: ['./index.js'],
     output: {
         path: __dirname + '/dist',
@@ -10,4 +7,4 @@ module.exports = {
         libraryTarget: 'umd',
         libraryExport: 'default'
     }
-};
+});

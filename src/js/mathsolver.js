@@ -1,6 +1,8 @@
 import { Funzione } from "./funzione";
 import { Termine } from "./termine";
+import { stringWithoutPlus } from "./utils";
 window.Funzione = Funzione;
+window.stringWithoutPlus = stringWithoutPlus;
 
 String.prototype.isAlpha = function () {
   return this.match("^[a-zA-Z()]+$");
@@ -232,7 +234,6 @@ function MathSolver(options) {
    * @name MathSolver#togliRisultato
    */
   this.togliRisultato = function () {
-    console.log("bbb");
     document.querySelector(options.elementi.risultato).style.display = "none";
     document.querySelector(
       options.elementi.passaggiScomposizione
@@ -242,7 +243,7 @@ function MathSolver(options) {
     document.querySelector(options.elementi.passaggiScomposizione).innerHTML =
       "";
     document.querySelector(options.elementi.equazioniRisolte).innerHTML = "";
-    pulisciPunti();
+    this.pulisciPunti();
   };
 
   /**
@@ -568,7 +569,7 @@ function MathSolver(options) {
     };
   };
 
-    /**
+  /**
    * Questo metodo scompone un'equazione raccogliendo la x
    *
    * @method
@@ -577,12 +578,12 @@ function MathSolver(options) {
    * @returns {RisultatoScomposizione} Risultato della scomposizione
    */
   this.scomponiRaccogliendo = function (funzione) {
-    let equazioneScomposta = ``;
+    let equazioneScomposta = [];
     let equazionePerLatex = ``;
     let scomposizione = ``;
 
     funzione.ordina(); // Ordino la funzione in modo decrescente in base all'esponente della parte letterale
-    const polinomio = funzione.membri[1];
+    const polinomio = funzione.membri[0];
     const termini = funzione.termini;
     const ultimoTermine = termini[termini.length - 1];
     const ultimoTermineString = ultimoTermine.parteLetterale.toString();
@@ -590,46 +591,49 @@ function MathSolver(options) {
     scomposizione += `<div class="col d-flex justify-content-center">
     <div class="card bg-primary text-white mb-4">
         <div class="card-header">${this.toLatex(
-          "\\text{Scomposizione con raccogliendo la x}"
+          "\\text{Scomposizione raccogliendo la x}"
         )}</div>
         <div class="card-body">`;
 
     // x^3-x = x(x^2-1)
-    equazioneScomposta = `(${ultimoTermineString})(`;
+    equazioneScomposta.push(`${ultimoTermineString}`);
     equazionePerLatex = `${ultimoTermineString}(`;
 
+    let temp = ``;
+    let tmpPerLatex = ``;
+
     // Inserisco tutti i termini con l'esponente cambiato di uno e il coefficiente
-    for(let i = 0;i < termini.length;i++) {
+    for (let i = 0; i < termini.length; i++) {
       const nuovoTermine = new Termine(JSON.parse(JSON.stringify(termini[i])));
-      
-      const nuovoEsponente = nuovoTermine.parteLetterale.esponente - ultimoTermine.parte.esponente;
-      
+
+      const nuovoEsponente =
+        nuovoTermine.parteLetterale.esponente -
+        ultimoTermine.parteLetterale.esponente;
+
       // Se l'esponente è 1 elimino la parte letterale
-      if(nuovoEsponente === 0) {
+      if (nuovoEsponente === 0) {
         nuovoTermine.parteLetterale = null;
-      }else { // Altrimenti
+      } else {
+        // Altrimenti
         // Abbasso di uno
         nuovoTermine.parteLetterale.esponente = nuovoEsponente;
       }
 
-      equazionePerLatex += nuovoTermine.toString(true);
-      equazioneScomposta += nuovoTermine.toString();
+      tmpPerLatex += nuovoTermine.toString(true);
+      temp += nuovoTermine.toString();
     }
 
-    equazioneScomposta += `)`;
-    equazionePerLatex += `)`;
-    
+    equazionePerLatex += `${stringWithoutPlus(tmpPerLatex)})`;
+    equazioneScomposta.push(`${stringWithoutPlus(temp)}`);
+
     scomposizione += this.toLatex(`${polinomio}=${equazionePerLatex}`);
 
     scomposizione += `</div>
     </div>
 </div>`;
 
-console.log('equazioneScomposta', equazioneScomposta);
-console.log('scomposizione', scomposizione);
-
     return {
-      equazione: [equazioneScomposta],
+      equazione: equazioneScomposta,
       scomposizione,
     };
   };
@@ -643,16 +647,26 @@ console.log('scomposizione', scomposizione);
    * @returns {RisultatoScomposizione} Risultato della scomposizione
    */
   this.scomponi = function (funzione) {
+    funzione.termini = funzione.termini
+      .filter((t) => t.coefficiente !== 0)
+      .map((t) => {
+        if (t.parteLetterale && !t.parteLetterale.lettera) {
+          t.parteLetterale = null;
+        }
+
+        return t;
+      });
     // Innanzitutto provo a scomporre raccogliendo la x
     // Se non riesco scompongo con Ruffini
     // Posso scomporre raccogliendo la x solamente se non esistono termini noti
     const termineNoto = funzione.termineNoto();
-    console.log('termini funzione', funzione.termini);
-    const scomponibileRaccogliendo = !termineNoto;
+    const scomponibileRaccogliendo =
+      !termineNoto && funzione.termini.length > 1;
 
-    if(scomponibileRaccogliendo) {  // Se e' scomponibile raccogliendo
+    if (scomponibileRaccogliendo) {
+      // Se e' scomponibile raccogliendo
       return this.scomponiRaccogliendo(funzione);
-    }else {
+    } else {
       return this.scomponiConRuffini(funzione);
     }
   };
@@ -793,10 +807,17 @@ console.log('scomposizione', scomposizione);
         if (sistema)
           code += `<td class="spazio-sistema"></td>
 <td class="graffa-sistema">`;
-        code += this.toLatex(
-          "x_{" + (i + 1) + "} = " + MathSolver.numeroRazionale(risultato)
-        );
-        if (sistema) code += this.toLatex("y_{" + (i + 1) + "} = 0");
+        if (!Number.isNaN(parseFloat(risultato))) {
+          code += this.toLatex(
+            "x_{" + (i + 1) + "} = " + MathSolver.numeroRazionale(risultato)
+          );
+          if (sistema) code += this.toLatex("y_{" + (i + 1) + "} = 0");
+        } else {
+          code += this.toLatex(`\\text{eq. imp. in } \\mathbb{R}`);
+
+          if (sistema) code += `${this.toLatex(asse)}`;
+        }
+
         if (sistema)
           code += `
 </td>`;
@@ -1054,13 +1075,20 @@ console.log('scomposizione', scomposizione);
                 code += `<td class="spazio-sistema"></td>
                       
                       <td class="graffa-sistema">`;
-              code += this.toLatex(
-                "x_{" +
-                  (i + 1) +
-                  "} = " +
-                  MathSolver.numeroRazionale(risultati[i])
-              );
-              if (sistema) code += this.toLatex("y_{" + (i + 1) + "} = 0");
+              if (!Number.isNaN(parseFloat(risultati[i]))) {
+                code += this.toLatex(
+                  "x_{" +
+                    (i + 1) +
+                    "} = " +
+                    MathSolver.numeroRazionale(risultati[i])
+                );
+                if (sistema) code += this.toLatex("y_{" + (i + 1) + "} = 0");
+              } else {
+                code += this.toLatex(`\\text{eq. imp. in } \\mathbb{R}`);
+
+                if (sistema) code += `${this.toLatex(asse)}`;
+              }
+
               if (sistema) code += `</td>`;
 
               if (aggiungiPunto) {
@@ -1265,12 +1293,16 @@ console.log('scomposizione', scomposizione);
    * @param {Array<string>} disequazioni Disequazioni da risolvere
    * @param {string} segnoPositivo Segno da utilizzare quando il valore e' positivo alla fine
    * @param {string} segnoNegativo Segno da utilizzare quando il valore e' negativo alla fine
+   * @param {string} testoPositivo Testo da visualizare nel tooltip per intervallo positivo
+   * @param {string} testoNegativo Testo da visualizare nel tooltip per intervallo negativo
    * @returns
    */
   this.risolviDisequazioni = function (
     disequazioni,
     segnoPositivo = "+",
-    segnoNegativo = "-"
+    segnoNegativo = "-",
+    testoPositivo = "positiva",
+    testoNegativo = "negativa"
   ) {
     let insiemePositivo = [];
     let insiemeNegativo = [];
@@ -1348,8 +1380,10 @@ console.log('scomposizione', scomposizione);
 
       code += `>${
         circle
-          ? '<span class="circle circle-' +
+          ? '<span class="my-tooltip circle circle-' +
             (cella ? "positive" : "negative") +
+            '" title="La funzione in questo intervallo è ' +
+            (cella ? testoPositivo : testoNegativo) +
             '">'
           : ""
       }${mostraSegno ? (circle ? segno : this.toLatex(segno)) : ""}${
@@ -1514,12 +1548,16 @@ console.log('scomposizione', scomposizione);
    * @param {Funzione} funzione Funzione da porre maggiore di zero
    * @param {string} segnoPositivo Segno da utilizzare quando il valore e' positivo alla fine
    * @param {string} segnoNegativo Segno da utilizzare quando il valore e' negativo alla fine
+   * @param {string} testoPositivo Testo da visualizare nel tooltip per intervallo positivo
+   * @param {string} testoNegativo Testo da visualizare nel tooltip per intervallo negativo
    * @returns
    */
   this.funzioneMaggioreDiZero = function (
     funzione,
     segnoPositivo = "+",
-    segnoNegativo = "-"
+    segnoNegativo = "-",
+    testoPositivo = "positiva",
+    testoNegativo = "negativa"
   ) {
     let code = this.toLatex(`${funzione.membri[1]} > 0`);
 
@@ -1528,7 +1566,8 @@ console.log('scomposizione', scomposizione);
     let partiTemp = [];
 
     if (funzione.grado() > 1) {
-      const scomp = this.scomponi(new Funzione(`${funzione.membri[1]}=0`));
+      const funcString = `${funzione.membri[1]}=0`;
+      const scomp = this.scomponi(new Funzione(funcString));
       partiTemp = scomp.equazione;
     }
 
@@ -1537,9 +1576,12 @@ console.log('scomposizione', scomposizione);
     partiTemp.forEach((parte) => {
       const func = new Funzione(`${parte}=0`);
       if (func.grado() == 2) {
-        this.scomponi(func).equazione.forEach((p) => {
-          parti.push(p);
-        });
+        let scomponiFunc = this.scomponi(func).equazione;
+        if(scomponiFunc.length === 0) {
+          scomponiFunc = [parte];
+        }
+
+        parti = [...parti, ...scomponiFunc];
       } else {
         parti.push(parte);
       }
@@ -1561,7 +1603,7 @@ console.log('scomposizione', scomposizione);
       }
     } else {
       equazioneScomposta = parti.map((e) => `(${e})`).join("");
-      code += this.toLatex(`${equazioneScomposta} > 0`);
+      code += this.toLatex(`${equazioneScomposta}>0`);
     }
 
     code += `<hr>`;
@@ -1569,21 +1611,16 @@ console.log('scomposizione', scomposizione);
     let disequazioni = [];
 
     parti.forEach((parte) => {
-      if (parti.length > 1) {
-        code += this.toLatex(`${parte}>0`);
-      }
+      code += this.toLatex(`${parte}>0`);
 
-      const func = new Funzione(`y=${parte}`);
+      const func = new Funzione(`${parte}=0`);
       func.ordina();
 
       const grado = func.grado();
 
       if (grado === 0) {
         // Se la funzione non ha la x
-        const disequazione = `${parte}>0`;
-        disequazioni.push(disequazione);
-
-        code += this.toLatex(`${MathSolver.numeroRazionale(parte)}>0`);
+        disequazioni.push(`${parte}>0`);
 
         code += `<hr>`;
       } else if (grado === 1) {
@@ -1594,15 +1631,15 @@ console.log('scomposizione', scomposizione);
         const disequazione = `x>${secondoMembro}`;
         disequazioni.push(disequazione);
 
-        code += this.toLatex(`x>${MathSolver.numeroRazionale(secondoMembro)}`);
+        if (disequazione !== `${parte}>0`) {
+          code += this.toLatex(`x>${MathSolver.numeroRazionale(secondoMembro)}`);
+        }
 
         code += `<hr>`;
       } else if (grado === 2) {
         // Se la funzione è di secondo grado
         // La scrivo sotto forma di equazione
         const equazione = `${parte}=0`;
-
-        code += this.toLatex(equazione);
 
         const soluzioneEquazione = this.risolviEquazione(
           equazione,
@@ -1620,14 +1657,13 @@ console.log('scomposizione', scomposizione);
           code: codeEquazione,
         } = soluzioneEquazione;
 
-        code += `<hr>`;
         code += codeEquazione;
         code += this.toLatex(`\\Delta = ${MathSolver.numeroRazionale(delta)}`);
-        code += `<hr>`;
+        code += `<div class="card bg-primary text-white" style="width:10%;padding:0;margin-left:45%;text-align:center;"><div class="card-body">`;
         code += this.toLatex(`a ${a > 0 ? ">" : "<"} 0`);
         code += this.toLatex(`\\Delta ${delta > 0 ? ">" : "<"} 0`);
         code += this.toLatex(`dis > 0`);
-        code += `<hr>`;
+        code += `</div></div>`;
 
         // Adesso risolvo la disequazione di secondo grado in base ai dati
         if (a > 0) {
@@ -1683,7 +1719,13 @@ console.log('scomposizione', scomposizione);
       insiemeNegativo,
       insiemiInOrdine,
       code: codeTabella,
-    } = this.risolviDisequazioni(disequazioni, segnoPositivo, segnoNegativo);
+    } = this.risolviDisequazioni(
+      disequazioni,
+      segnoPositivo,
+      segnoNegativo,
+      testoPositivo,
+      testoNegativo
+    );
 
     code += codeTabella;
 
@@ -1730,7 +1772,13 @@ console.log('scomposizione', scomposizione);
       insiemeNegativo,
       insiemiInOrdine,
       code: codeFunc,
-    } = this.funzioneMaggioreDiZero(derivata, "⬈", "⬊");
+    } = this.funzioneMaggioreDiZero(
+      derivata,
+      "⬈",
+      "⬊",
+      "crescente",
+      "decrescente"
+    );
 
     code += codeFunc;
     code += `<br>`;
@@ -1833,7 +1881,7 @@ console.log('scomposizione', scomposizione);
       insiemePositivo,
       insiemeNegativo,
       code: codeFunc,
-    } = this.funzioneMaggioreDiZero(derivata, "⬈", "⬊");
+    } = this.funzioneMaggioreDiZero(derivata, "⊔", "⊓", "convessa", "concava");
 
     code += codeFunc;
     code += `<br>`;
@@ -1916,7 +1964,9 @@ console.log('scomposizione', scomposizione);
 
         soluzioniIntegrali +=
           this.toLatex(
-            `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) =${MathSolver.numeroRazionale(Fb)} - ${MathSolver.numeroRazionale(
+            `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) =${MathSolver.numeroRazionale(
+              Fb
+            )} - ${MathSolver.numeroRazionale(
               Fa
             )} = ${MathSolver.numeroRazionale(res)}`
           ) + "\n";
@@ -1930,21 +1980,21 @@ console.log('scomposizione', scomposizione);
         };
       });
 
-      let ultimoPassaggio = ``;
-      let integraliToString = ``;
+    let ultimoPassaggio = ``;
+    let integraliToString = ``;
 
-      integrali
-      .forEach((integrale, index) => {
-        ultimoPassaggio += MathSolver.numeroRazionale(Math.abs(integrale.res));
-        integraliToString += integrale.code;
+    integrali.forEach((integrale, index) => {
+      ultimoPassaggio += MathSolver.numeroRazionale(Math.abs(integrale.res));
+      integraliToString += integrale.code;
 
-        if(index < (integrali.length - 1)) {
-          const separator = integrali[index + 1] && integrali[index + 1].res < 0 ? ' - ' : ' + ';
-          
-          ultimoPassaggio += ' + ';
-          integraliToString += separator;
-        }
-      })
+      if (index < integrali.length - 1) {
+        const separator =
+          integrali[index + 1] && integrali[index + 1].res < 0 ? " - " : " + ";
+
+        ultimoPassaggio += " + ";
+        integraliToString += separator;
+      }
+    });
 
     let code = ``;
 
@@ -1965,9 +2015,7 @@ console.log('scomposizione', scomposizione);
     );
 
     if (integrali.length > 1) {
-      code += this.toLatex(
-        `Area = ${integraliToString}`
-      );
+      code += this.toLatex(`Area = ${integraliToString}`);
     }
 
     code += this.toLatex(`Area = ${ultimoPassaggio}`);

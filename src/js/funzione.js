@@ -111,11 +111,11 @@ function Funzione(options) {
      * @returns {number} Termine noto
      */
     this.termineNoto = function () {
-        let termine = 0;
-        for (let i = 0; i < this.termini.length; i++) {
-            if (this.termini[i].parteLetterale == null) return this.termini[i].coefficiente;
-        }
-        return termine;
+        const found = this.termini.find(t => !t.parteLetterale || !t.parteLetterale?.lettera);
+
+        if(!found) return 0;
+
+        return found.coefficiente || 0;
     }
 
     /**
@@ -270,7 +270,7 @@ function Funzione(options) {
         let secondoPassaggio = primoPassaggio;
 
         this.termini.forEach((termine, i) => {
-            const termLetterale = termine.parteLetterale ? termine.parteLetterale.toString() : `x^0`;
+            const termLetterale = termine.parteLetterale && termine.parteLetterale.lettera ? termine.parteLetterale.toString() : `x^0`;
 
             if (i > 0) {
                 primoPassaggio += ` `;
@@ -380,7 +380,15 @@ Funzione.interpreta = function (funzione, obj) {
     const parteFissa = funzione.includes('x=') ? 'x' : 'y'; // Prendo la parte fissa della funzione
 
     funzione = funzione.trim(); // Levo tutti gli spazi
-    funzione = funzione.replace('x=', '').replace('y=', ''); // Lascio solo l'equazione
+
+    if(funzione.startsWith('x=')) {
+        funzione = funzione.replace('x=', '');
+    }
+
+    if(funzione.startsWith('y=')) {
+        funzione = funzione.replace('y=', '');
+    }
+
     // Splitto per il + o per il - l'espressione in più termini (es. termine con la x^2 ecc...)
     let partiStringa = MathSolver.splittaEspressione(funzione, ['+', '-']);
     // Adesso divido ogni termine in parte letterale e numerica
