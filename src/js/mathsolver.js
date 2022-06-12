@@ -1,4 +1,5 @@
 import { Funzione } from "./funzione";
+import { Termine } from "./termine";
 window.Funzione = Funzione;
 
 String.prototype.isAlpha = function () {
@@ -379,7 +380,7 @@ function MathSolver(options) {
    * @method
    * @name MathSolver#scomponiConRuffini
    * @param {Funzione} funzione Funzione da scomporre con ruffini
-   * @returns {RisultatoScomposizione} risultato della scomposizione
+   * @returns {RisultatoScomposizione} Risultato della scomposizione
    */
   this.scomponiConRuffini = function (funzione) {
     let equazioneScomposta = [];
@@ -567,19 +568,93 @@ function MathSolver(options) {
     };
   };
 
+    /**
+   * Questo metodo scompone un'equazione raccogliendo la x
+   *
+   * @method
+   * @name MathSolver#scomponiRaccogliendo
+   * @param {Funzione} funzione Funzione da scomporre
+   * @returns {RisultatoScomposizione} Risultato della scomposizione
+   */
+  this.scomponiRaccogliendo = function (funzione) {
+    let equazioneScomposta = ``;
+    let equazionePerLatex = ``;
+    let scomposizione = ``;
+
+    funzione.ordina(); // Ordino la funzione in modo decrescente in base all'esponente della parte letterale
+    const polinomio = funzione.membri[1];
+    const termini = funzione.termini;
+    const ultimoTermine = termini[termini.length - 1];
+    const ultimoTermineString = ultimoTermine.parteLetterale.toString();
+
+    scomposizione += `<div class="col d-flex justify-content-center">
+    <div class="card bg-primary text-white mb-4">
+        <div class="card-header">${this.toLatex(
+          "\\text{Scomposizione con raccogliendo la x}"
+        )}</div>
+        <div class="card-body">`;
+
+    // x^3-x = x(x^2-1)
+    equazioneScomposta = `(${ultimoTermineString})(`;
+    equazionePerLatex = `${ultimoTermineString}(`;
+
+    // Inserisco tutti i termini con l'esponente cambiato di uno e il coefficiente
+    for(let i = 0;i < termini.length;i++) {
+      const nuovoTermine = new Termine(JSON.parse(JSON.stringify(termini[i])));
+      
+      const nuovoEsponente = nuovoTermine.parteLetterale.esponente - ultimoTermine.parte.esponente;
+      
+      // Se l'esponente è 1 elimino la parte letterale
+      if(nuovoEsponente === 0) {
+        nuovoTermine.parteLetterale = null;
+      }else { // Altrimenti
+        // Abbasso di uno
+        nuovoTermine.parteLetterale.esponente = nuovoEsponente;
+      }
+
+      equazionePerLatex += nuovoTermine.toString(true);
+      equazioneScomposta += nuovoTermine.toString();
+    }
+
+    equazioneScomposta += `)`;
+    equazionePerLatex += `)`;
+    
+    scomposizione += this.toLatex(`${polinomio}=${equazionePerLatex}`);
+
+    scomposizione += `</div>
+    </div>
+</div>`;
+
+console.log('equazioneScomposta', equazioneScomposta);
+console.log('scomposizione', scomposizione);
+
+    return {
+      equazione: [equazioneScomposta],
+      scomposizione,
+    };
+  };
+
   /**
    * Questo metodo scompone un'equazione trovando il metodo migliore per scomporla
    *
    * @method
    * @name MathSolver#scomponi
    * @param {Funzione} funzione Funzione da scomporre
+   * @returns {RisultatoScomposizione} Risultato della scomposizione
    */
   this.scomponi = function (funzione) {
-    // x^3-x
     // Innanzitutto provo a scomporre raccogliendo la x
     // Se non riesco scompongo con Ruffini
+    // Posso scomporre raccogliendo la x solamente se non esistono termini noti
+    const termineNoto = funzione.termineNoto();
+    console.log('termini funzione', funzione.termini);
+    const scomponibileRaccogliendo = !termineNoto;
 
-    return this.scomponiConRuffini(funzione);
+    if(scomponibileRaccogliendo) {  // Se e' scomponibile raccogliendo
+      return this.scomponiRaccogliendo(funzione);
+    }else {
+      return this.scomponiConRuffini(funzione);
+    }
   };
 
   /**
