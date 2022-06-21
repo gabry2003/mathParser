@@ -564,7 +564,7 @@ function MathSolver(options) {
     }
 
     return {
-      equazione: equazioneScomposta,
+      equazione: equazioneScomposta.filter(a => a !== '0' && a !== '-0').map(a => a.replaceAll('-0', '').replaceAll('+0', '')),
       scomposizione: scomposizione,
     };
   };
@@ -633,7 +633,7 @@ function MathSolver(options) {
 </div>`;
 
     return {
-      equazione: equazioneScomposta,
+      equazione: equazioneScomposta.filter(a => a !== '0' && a !== '-0').map(a => a.replaceAll('-0', '').replaceAll('+0', '')),
       scomposizione,
     };
   };
@@ -1312,6 +1312,8 @@ function MathSolver(options) {
     // Prendo i numeri presenti nelle disequazioni
     let numeriDisequazioni = [];
 
+    disequazioni = [...new Set(disequazioni)];
+
     disequazioni
       .filter((d) => d.includes("x"))
       .forEach((d) => {
@@ -1913,7 +1915,7 @@ function MathSolver(options) {
    */
   this.areaFunzione = function (funzione, punti) {
     if (punti.length < 2) {
-      return this.toLatex(`\\text{Impossibile trovare l'area!}`);
+      return this.toLatex(`Area = 0`);
     }
 
     punti.sort((a, b) => a.x - b.x);

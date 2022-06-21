@@ -338,10 +338,10 @@ function Funzione(options) {
      * @returns {boolean} Se la funzione e' o no una prabola
      */
     this.isParabola = function() {
-        // Una funzione e' una parabola se e' presente la x di secondo grado
+        // Una funzione e' una parabola se e' presente la x di secondo grado e quello e' il grado della funzione
         const term = this.getByExp(2);
 
-        return term && term.coefficiente != 0;
+        return this.grado() === 2 && term && term.coefficiente != 0;
     }
 
     /**
