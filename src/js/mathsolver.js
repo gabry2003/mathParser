@@ -672,6 +672,43 @@ function MathSolver(options) {
   };
 
   /**
+   * Questo metodo scompone un'equazione in modo ricorsivo, quando superano il secondo grado
+   * 
+   * @method
+   * @name MathSolver#scomponiRicorsivo
+   * @param {Funzione} funzione Funzione da scomporre
+   * @returns {RisultatoScomposizione} Risultato della scomposizione
+   */
+  this.scomponiRicorsivo = function (funzione) {
+    let scomposizione = ``;
+    let equazione = [];
+    
+    const resScomp_ = this.scomponi(funzione);
+    const resScomp = resScomp_.equazione;
+    scomposizione += resScomp_.scomposizione;
+
+    const controlloGrado = funzione => {
+      const func = new Funzione(`y=${funzione}`);
+      const grado = func.grado();
+
+      if(grado > 2) {
+        const nuovaScomposizione_ = func.scomponi();
+        const nuovaScomposizione = nuovaScomposizione_.equazione;
+
+        scomposizione += nuovaScomposizione_.scomposizione;
+
+        nuovaScomposizione.forEach(controlloGrado);
+      }else {
+        equazione.push(funzione);
+      }
+    };
+
+    resScomp.forEach(controlloGrado);
+
+    return {equazione, scomposizione};
+  };
+
+  /**
    * Questo metodo risolve le equazioni di grado superiore al 2, è stato scritto per dividere la risoluzione di equazioni semplici da queste
    *
    * @method
@@ -697,7 +734,7 @@ function MathSolver(options) {
       document.querySelector(options.elementi.equazioniRisolte).innerHTML = "";
     }
 
-    const scomposta = this.scomponi(new Funzione(equazione));
+    let scomposta = this.scomponi(new Funzione(equazione));
     // Se l'equazione è scomponibile stampo a schermo la scomposizione
     if (scomposta.scomposizione !== "") {
       document.querySelector(
@@ -1567,7 +1604,7 @@ function MathSolver(options) {
 
     let partiTemp = [];
 
-    if (funzione.grado() > 1) {
+    if (funzione.grado() > 2) {
       const funcString = `${funzione.membri[1]}=0`;
       const scomp = this.scomponi(new Funzione(funcString));
       partiTemp = scomp.equazione;
@@ -1577,8 +1614,8 @@ function MathSolver(options) {
 
     partiTemp.forEach((parte) => {
       const func = new Funzione(`${parte}=0`);
-      if (func.grado() == 2) {
-        let scomponiFunc = this.scomponi(func).equazione;
+      if (func.grado() > 2) {
+        let scomponiFunc = this.scomponiRicorsivo(func).equazione;
         if(scomponiFunc.length === 0) {
           scomponiFunc = [parte];
         }
@@ -1987,6 +2024,11 @@ function MathSolver(options) {
 
     integrali.forEach((integrale, index) => {
       ultimoPassaggio += MathSolver.numeroRazionale(Math.abs(integrale.res));
+
+      if(index === 0 && integrale.res < 0) {
+        integraliToString += '-';
+      }
+
       integraliToString += integrale.code;
 
       if (index < integrali.length - 1) {
