@@ -63,9 +63,12 @@ function Grafico(options) {
   if (options.colori == undefined || options.colori == null) {
     options.colori = {
       assi: "#444444",
-      punti: "#f400a1",
-      puntiFunzione: "#4D4DFF",
-      funzione: "#484848",
+      punti: "red",
+      puntiFunzione: "red",
+      funzione: "#5E81B5",
+      //punti: "#f400a1",
+      //puntiFunzione: "#4D4DFF",
+      //funzione: "#484848",
       testo: "#444444",
     };
   } else {
@@ -223,7 +226,7 @@ function Grafico(options) {
     assii.push(
       view.axis({
         axis: i + 1,
-        width: 3,
+        width: 2,
         detail: asse.max * 2,
         color: options.colori.assi
       })
@@ -296,16 +299,16 @@ function Grafico(options) {
     color: options.colori.funzione,
   });
 
-  let points = view.point({
-    size: 3,
-    color: options.colori.puntiFunzione,
-  });
+  // let points = view.point({
+  //   size: 3,
+  //   color: options.colori.puntiFunzione,
+  // });
 
-  let ticks = view.ticks({
-    width: 3,
-    size: 15,
-    color: options.colori.testo,
-  });
+  // let ticks = view.ticks({
+  //   width: 3,
+  //   size: 15,
+  //   color: options.colori.testo,
+  // });
 
   /*let format =
         view.format({
@@ -407,9 +410,9 @@ function Grafico(options) {
             channels: 2,
             data: [[punto.x, punto.y]],
           }),
-          size: 25,
+          size: 23,
           color: punto.foreground ? punto.foreground : options.colori.punti, // Se questo punto ha un colore di testo uso quello
-          outline: 1,
+          outline: 0,
           background: punto.background ? punto.background : "transparent", // Se questo punto ha un colore di sfondo uso quello
           offset: [10, 10],
           zIndex: 1,
