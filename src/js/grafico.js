@@ -292,17 +292,17 @@ function Grafico(options) {
   });
 
   let curve = view.line({
-    width: 4,
+    width: 2,
     color: options.colori.funzione,
   });
 
   let points = view.point({
-    size: 5,
+    size: 3,
     color: options.colori.puntiFunzione,
   });
 
   let ticks = view.ticks({
-    width: 5,
+    width: 3,
     size: 15,
     color: options.colori.testo,
   });
@@ -342,7 +342,7 @@ function Grafico(options) {
     });
     const ticks = view.ticks({
       width: 5,
-      size: 15,
+      size: 7,
       color: options.colori.testo,
       zBias: 2,
     });
@@ -372,7 +372,7 @@ function Grafico(options) {
         channels: 2,
         data: [coordinate[i]],
       }),
-      size: 16,
+      size: 20,
       color: options.colori.testo,
       outline: 0,
       background: "transparent",
@@ -407,7 +407,7 @@ function Grafico(options) {
             channels: 2,
             data: [[punto.x, punto.y]],
           }),
-          size: 30,
+          size: 25,
           color: punto.foreground ? punto.foreground : options.colori.punti, // Se questo punto ha un colore di testo uso quello
           outline: 1,
           background: punto.background ? punto.background : "transparent", // Se questo punto ha un colore di sfondo uso quello

@@ -2005,7 +2005,7 @@ function MathSolver(options) {
           this.toLatex(
             `\\int_{${aRazionale}}^{${bRazionale}} f(x) dx = F(${bRazionale}) - F(${aRazionale}) =${MathSolver.numeroRazionale(
               Fb
-            )} - ${MathSolver.numeroRazionale(
+            )} - ${this.controllaParentesi(
               Fa
             )} = ${MathSolver.numeroRazionale(res)}`
           ) + "\n";
